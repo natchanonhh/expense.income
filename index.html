@@ -147,7 +147,6 @@
     </div>
 
     <script>
-        // ⚙️ ตั้งค่า Supabase (ฐานข้อมูลกลางตัวเดียวกัน)
         const SB_URL = 'https://nnxraimetlwvsekburkm.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ueHJhaW1ldGx3dnNla2J1cmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5ODEyMjgsImV4cCI6MjEwMDU1NzIyOH0.6fGLFjKsKO94EVf3B_es1P-ImXnkcreC3zRKxiaDEiM';
         const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -224,7 +223,6 @@
             } else alert("รหัส PIN เก่าไม่ถูกต้อง");
         }
 
-        // ================= 🧠 ระบบสแกนสลิปอัจฉริยะ (ดึงคีย์ลับจากตาราง settings ในหลังบ้านมาตรวจ AI อัตโนมัติ) =================
         async function fileToGenerativePart(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -245,7 +243,6 @@
             statusTxt.style.color = "var(--bbl-blue)";
             
             try {
-                // 1. ดึง API Key ที่แอดมินตั้งค่าไว้ในตาราง settings ของหลังบ้าน Supabase
                 const { data: settingData, error: setErr } = await sb
                     .from('settings')
                     .select('key_value')
@@ -271,8 +268,8 @@
                     contents: [{ parts: [{ text: prompt }, imagePart] }]
                 };
 
-                // 2. เรียกใช้งาน Gemini API โดยใช้คีย์ที่ดึงมาจากหลังบ้านอย่างปลอดภัย
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                // ใช้ gemini-2.5-flash เพื่อความเสถียรและหลีกเลี่ยงโควต้าเต็ม
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
@@ -295,7 +292,6 @@
 
                 const slipNote = `${typeName} เวลา ${result.time || '00:00'} น.`;
 
-                // 3. 🛑 ระบบป้องกันสลิปซ้ำ (ตรวจสอบจากฐานข้อมูล Supabase)
                 statusTxt.innerText = "🔍 กำลังตรวจสอบสลิปซ้ำ...";
                 const { data: duplicateCheck } = await sb
                     .from('transactions')
@@ -340,7 +336,6 @@
             e.target.value = '';
         }
 
-        // ================= ระบบดึงข้อมูลและฟิลเตอร์ =================
         async function loadData() {
             const { data } = await sb.from('transactions').select('*').eq('username', currentUser).order('date', {ascending: true}).order('id', {ascending: true});
             
