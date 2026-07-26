@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Income & Expense Hub - Smart AI Scanner</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- เพิ่ม Library สำหรับครอปรูปภาพ (Cropper.js) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -16,16 +21,16 @@
         .active { display: flex; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .bbl-header { text-align: center; margin-bottom: 20px; }
+        .bbl-header { text-align: center; margin-bottom: 15px; }
         
-        /* โลโก้แอป (กำหนดตายตัวในโค้ด ไม่ให้ผู้ใช้กดเปลี่ยนเอง) */
-        .app-logo-img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; }
-        .profile-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid var(--bbl-blue); margin-right: 10px; }
+        .app-logo-img { width: 120px; height: 120px; min-height: 120px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; display: inline-block; }
+        .profile-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bbl-blue); margin-right: 12px; cursor: pointer; transition: transform 0.2s; }
+        .profile-img:hover { transform: scale(1.1); }
         
         .bbl-header h2 { color: var(--bbl-blue); font-weight: 700; margin-top: 10px; }
         .bbl-line { height: 4px; width: 50px; background: var(--bbl-orange); margin: 10px auto; border-radius: 2px; }
 
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+        input:not(.input), select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
         input.center { text-align: center; letter-spacing: 1px; }
         input:focus, select:focus { border-color: var(--bbl-blue); outline: none; }
         
@@ -69,51 +74,254 @@
         .summary-icon { width: 16px; height: 16px; border-radius: 50%; }
         
         .realtime-text { font-size: 0.8rem; color: #666; text-align: right; margin-bottom: 10px; font-weight: 600; }
+        
+        /* สไตล์สำหรับ Modal และ Overlay */
+        .crop-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+        .crop-modal-content { width: 90%; max-width: 400px; background: white; padding: 20px; border-radius: 12px; }
+        .crop-container { width: 100%; max-height: 350px; overflow: hidden; margin-bottom: 15px; background: #f0f0f0; }
+        .crop-container img { max-width: 100%; }
+
+        /* --- สไตล์ส่วนตัวสำหรับการ์ดหน้าล็อคอินและสมัคร --- */
+        .auth-wrapper { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center; }
+        .card {
+            background: radial-gradient(circle, white 0%, #d5d5d5 100%);
+            width: 100%; min-height: 240px; border-radius: 20px; position: relative; box-shadow: 3px 3px 17px 0px rgba(0, 0, 0, 0.35); padding: 20px; padding-bottom: 45px; display: flex; flex-direction: column; margin-bottom: 20px;
+        }
+        .card .visa-logo { position: absolute; top: 20px; left: 25px; }
+        .card .visa-logo svg { height: 25px; width: auto; }
+        .card .card-number-text { position: absolute; top: 55px; left: 25px; letter-spacing: 4px; font-size: 14px; color: #333; font-family: monospace; opacity: 0.9; }
+        .card .owner { position: absolute; bottom: 15px; left: 25px; letter-spacing: 1px; color: #333; font-size: 14px; opacity: 0.9; }
+        
+        .wave-group { position: relative; width: 85%; margin: 0 auto 15px auto; z-index: 2; }
+        .wave-group:first-of-type { margin-top: 75px; }
+        .wave-group .input { font-size: 16px; padding: 10px 5px; display: block; width: 100%; border: none; border-bottom: 1px solid #515151; background: transparent; color: #333; }
+        .wave-group .input:focus { outline: none; }
+        .wave-group .label { color: #555; font-size: 16px; font-weight: normal; position: absolute; pointer-events: none; left: 5px; top: 10px; display: flex; }
+        .wave-group .label-char { transition: 0.2s ease all; transition-delay: calc(var(--index) * 0.05s); }
+        .wave-group .input:focus ~ label .label-char, .wave-group .input:valid ~ label .label-char { transform: translateY(-20px); font-size: 13px; color: var(--bbl-blue); font-weight: bold; }
+        .wave-group .bar { position: relative; display: block; width: 100%; }
+        .wave-group .bar:before, .wave-group .bar:after { content: ""; height: 2px; width: 0; bottom: 0px; position: absolute; background: var(--bbl-orange); transition: 0.2s ease all; }
+        .wave-group .bar:before { left: 50%; }
+        .wave-group .bar:after { right: 50%; }
+        .wave-group .input:focus ~ .bar:before, .wave-group .input:focus ~ .bar:after { width: 50%; }
+
+        /* --- สไตล์สำหรับ MASTERCARD UI (Flip Card) ปรับปรุงใหม่ --- */
+        .flip-card {
+            background-color: transparent;
+            width: 320px; 
+            height: 200px;
+            perspective: 1000px;
+            color: white;
+            font-family: 'Sarabun', sans-serif;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s; transform-style: preserve-3d; }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back {
+            box-shadow: 0 8px 14px 0 rgba(0, 0, 0, 0.4); position: absolute; display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 16px;
+        }
+        .flip-card-front {
+            background-color: #171717; /* สีพื้นดำของการ์ด */
+        }
+        .flip-card-back {
+            background-color: #171717; transform: rotateY(180deg);
+        }
+        
+        /* ตำแหน่งข้อความและไอคอนบนหน้าบัตร */
+        .flip-card .heading_8264 { position: absolute; letter-spacing: 2px; font-size: 12px; top: 20px; right: 25px; margin: 0; }
+        .flip-card .chip { position: absolute; top: 50px; left: 25px; width: 42px; height: 32px; }
+        .flip-card .contactless { position: absolute; top: 85px; right: 40px; width: 22px; height: 22px; }
+        .flip-card .number { position: absolute; font-weight: bold; font-size: 18px; top: 110px; left: 25px; letter-spacing: 2.5px; font-family: monospace; margin: 0; }
+        .flip-card .date_8264 { position: absolute; font-weight: bold; font-size: 14px; bottom: 40px; left: 25px; font-family: monospace; margin: 0; }
+        .flip-card .name { position: absolute; font-weight: bold; font-size: 13px; bottom: 20px; left: 25px; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        .flip-card .logo { position: absolute; bottom: 20px; right: 25px; width: 45px; height: auto; }
+
+        /* ด้านหลังบัตร */
+        .flip-card .strip {
+            position: absolute; background-color: black; width: 100%; height: 40px; top: 30px;
+            background: repeating-linear-gradient(45deg, #303030, #303030 10px, #202020 10px, #202020 20px);
+        }
+        .flip-card .mstrip { position: absolute; background-color: rgb(255, 255, 255); width: 140px; height: 25px; top: 90px; left: 15px; border-radius: 2.5px; }
+        .flip-card .sstrip { position: absolute; background-color: rgb(255, 255, 255); width: 60px; height: 25px; top: 90px; left: 165px; border-radius: 2.5px; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; -webkit-user-select: none; }
+        .flip-card .code { font-weight: bold; text-align: center; margin: 0; color: black; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="app-container">
-        
+
         <!-- Input สำหรับเปลี่ยนรูปโปรไฟล์เฉพาะผู้ใช้ -->
         <input type="file" id="upload-profile" accept="image/*" hidden onchange="handleProfileUpload(event)">
 
         <!-- หน้าเข้าสู่ระบบ -->
-        <div id="login-scr" class="screen active">
-            <div class="bbl-header">
-                <!-- สามารถเปลี่ยนลิงก์รูปภาพโลโก้ตรง src ด้านล่างนี้ได้ตามต้องการ -->
-                <img src="https://i.postimg.cc/Qd3k6GRY/USK.png" class="app-logo-img" alt="Logo">
-                <h2>Income & Expense Hub</h2>
-                <div class="bbl-line"></div>
+        <div id="login-scr" class="screen active" style="justify-content: center; align-items: center; background: #ffffff;">
+            
+            <div class="auth-wrapper">
+                <div class="bbl-header">
+                    <img src="https://i.postimg.cc/Qd3k6GRY/USK.png" class="app-logo-img" alt="Logo">
+                    <h2 style="color: var(--bbl-blue); font-weight: 700; font-size: 1.5rem; margin-top: 0;">Income & Expense Hub</h2>
+                    <div class="bbl-line"></div>
+                </div>
+
+                <div class="card">
+                    <span class="visa-logo">
+                        <svg viewBox="0 0 256 83" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient y2="100%" y1="-2.006%" x2="54.877%" x1="45.974%" id="logosVisa0">
+                                    <stop stop-color="#222357" offset="0%"></stop>
+                                    <stop stop-color="#254AA5" offset="100%"></stop>
+                                </linearGradient>
+                            </defs>
+                            <path transform="matrix(1 0 0 -1 0 82.668)" d="M132.397 56.24c-.146-11.516 10.263-17.942 18.104-21.763c8.056-3.92 10.762-6.434 10.73-9.94c-.06-5.365-6.426-7.733-12.383-7.825c-10.393-.161-16.436 2.806-21.24 5.05l-3.744-17.519c4.82-2.221 13.745-4.158 23-4.243c21.725 0 35.938 10.724 36.015 27.351c.085 21.102-29.188 22.27-28.988 31.702c.069 2.86 2.798 5.912 8.778 6.688c2.96.392 11.131.692 20.395-3.574l3.636 16.95c-4.982 1.814-11.385 3.551-19.357 3.551c-20.448 0-34.83-10.87-34.946-26.428m89.241 24.968c-3.967 0-7.31-2.314-8.802-5.865L181.803 1.245h21.709l4.32 11.939h26.528l2.506-11.939H256l-16.697 79.963h-17.665m3.037-21.601l6.265-30.027h-17.158l10.893 30.027m-118.599 21.6L88.964 1.246h20.687l17.104 79.963h-20.679m-30.603 0L53.941 26.782l-8.71 46.277c-1.022 5.166-5.058 8.149-9.54 8.149H.493L0 78.886c7.226-1.568 15.436-4.097 20.41-6.803c3.044-1.653 3.912-3.098 4.912-7.026L41.819 1.245H63.68l33.516 79.963H75.473" fill="url(#logosVisa0)"></path>
+                        </svg>
+                    </span>
+                    <span class="card-number-text">card number</span>
+
+                    <div class="wave-group">
+                        <input required type="text" id="login-name" class="input" autocomplete="off" />
+                        <span class="bar"></span>
+                        <label class="label">
+                            <span class="label-char" style="--index: 0">ชื่</span>
+                            <span class="label-char" style="--index: 1">อ</span>
+                            <span class="label-char" style="--index: 2">ผู้</span>
+                            <span class="label-char" style="--index: 3">ใ</span>
+                            <span class="label-char" style="--index: 4">ช้</span>
+                        </label>
+                    </div>
+
+                    <div class="wave-group">
+                        <input required type="password" id="login-pin" class="input" maxlength="6" autocomplete="off" />
+                        <span class="bar"></span>
+                        <label class="label">
+                            <span class="label-char" style="--index: 0">ร</span>
+                            <span class="label-char" style="--index: 1">หั</span>
+                            <span class="label-char" style="--index: 2">ส</span>
+                            <span class="label-char" style="--index: 3">&nbsp;</span>
+                            <span class="label-char" style="--index: 4">P</span>
+                            <span class="label-char" style="--index: 5">I</span>
+                            <span class="label-char" style="--index: 6">N</span>
+                            <span class="label-char" style="--index: 7">&nbsp;</span>
+                            <span class="label-char" style="--index: 8">6</span>
+                            <span class="label-char" style="--index: 9">&nbsp;</span>
+                            <span class="label-char" style="--index: 10">ห</span>
+                            <span class="label-char" style="--index: 11">ลั</span>
+                            <span class="label-char" style="--index: 12">ก</span>
+                        </label>
+                    </div>
+                    
+                    <span class="owner">Thomas.F</span>
+                </div>
+
+                <button class="btn-primary" style="width: 100%;" onclick="doLogin()">เข้าสู่ระบบ</button>
+                <div class="text-link" onclick="switchScreen('register-scr')">สมัครสมาชิกใหม่</div>
             </div>
-            <input type="text" id="login-name" class="center" placeholder="ชื่อผู้ใช้งาน">
-            <input type="password" id="login-pin" class="center" placeholder="รหัส PIN 6 หลัก" maxlength="6">
-            <button class="btn-primary" onclick="doLogin()">เข้าสู่ระบบ</button>
-            <div class="text-link" onclick="switchScreen('register-scr')">สมัครสมาชิกใหม่</div>
+
         </div>
 
         <!-- หน้าสมัครสมาชิก -->
-        <div id="register-scr" class="screen">
-            <div class="bbl-header">
-                <img src="https://via.placeholder.com/150/0033A0/FFFFFF?text=BANK" class="app-logo-img" alt="Logo">
-                <h2>สมัครสมาชิกใหม่</h2>
-                <div class="bbl-line"></div>
+        <div id="register-scr" class="screen" style="justify-content: center; align-items: center; background: #ffffff;">
+            
+            <div class="auth-wrapper">
+                <div class="bbl-header">
+                    <img src="https://i.postimg.cc/Qd3k6GRY/USK.png" class="app-logo-img" alt="Logo">
+                    <h2 style="color: var(--bbl-blue); font-weight: 700; font-size: 1.5rem; margin-top: 0;">Income & Expense Hub</h2>
+                    <div class="bbl-line"></div>
+                </div>
+
+                <div class="card" style="min-height: 290px;">
+                    <span class="visa-logo">
+                        <svg viewBox="0 0 256 83" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient y2="100%" y1="-2.006%" x2="54.877%" x1="45.974%" id="logosVisa0">
+                                    <stop stop-color="#222357" offset="0%"></stop>
+                                    <stop stop-color="#254AA5" offset="100%"></stop>
+                                </linearGradient>
+                            </defs>
+                            <path transform="matrix(1 0 0 -1 0 82.668)" d="M132.397 56.24c-.146-11.516 10.263-17.942 18.104-21.763c8.056-3.92 10.762-6.434 10.73-9.94c-.06-5.365-6.426-7.733-12.383-7.825c-10.393-.161-16.436 2.806-21.24 5.05l-3.744-17.519c4.82-2.221 13.745-4.158 23-4.243c21.725 0 35.938 10.724 36.015 27.351c.085 21.102-29.188 22.27-28.988 31.702c.069 2.86 2.798 5.912 8.778 6.688c2.96.392 11.131.692 20.395-3.574l3.636 16.95c-4.982 1.814-11.385 3.551-19.357 3.551c-20.448 0-34.83-10.87-34.946-26.428m89.241 24.968c-3.967 0-7.31-2.314-8.802-5.865L181.803 1.245h21.709l4.32 11.939h26.528l2.506-11.939H256l-16.697 79.963h-17.665m3.037-21.601l6.265-30.027h-17.158l10.893 30.027m-118.599 21.6L88.964 1.246h20.687l17.104 79.963h-20.679m-30.603 0L53.941 26.782l-8.71 46.277c-1.022 5.166-5.058 8.149-9.54 8.149H.493L0 78.886c7.226-1.568 15.436-4.097 20.41-6.803c3.044-1.653 3.912-3.098 4.912-7.026L41.819 1.245H63.68l33.516 79.963H75.473" fill="url(#logosVisa0)"></path>
+                        </svg>
+                    </span>
+                    <span class="card-number-text">card number</span>
+
+                    <div class="wave-group">
+                        <input required type="text" id="reg-name" class="input" autocomplete="off" />
+                        <span class="bar"></span>
+                        <label class="label">
+                            <span class="label-char" style="--index: 0">ชื่</span>
+                            <span class="label-char" style="--index: 1">อ</span>
+                            <span class="label-char" style="--index: 2">ผู้</span>
+                            <span class="label-char" style="--index: 3">ใ</span>
+                            <span class="label-char" style="--index: 4">ช้</span>
+                        </label>
+                    </div>
+
+                    <div class="wave-group">
+                        <input required type="password" id="reg-pin" class="input" maxlength="6" autocomplete="off" />
+                        <span class="bar"></span>
+                        <label class="label">
+                            <span class="label-char" style="--index: 0">ตั้</span>
+                            <span class="label-char" style="--index: 1">ง</span>
+                            <span class="label-char" style="--index: 2">ร</span>
+                            <span class="label-char" style="--index: 3">หั</span>
+                            <span class="label-char" style="--index: 4">ส</span>
+                            <span class="label-char" style="--index: 5">&nbsp;</span>
+                            <span class="label-char" style="--index: 6">P</span>
+                            <span class="label-char" style="--index: 7">I</span>
+                            <span class="label-char" style="--index: 8">N</span>
+                            <span class="label-char" style="--index: 9">&nbsp;</span>
+                            <span class="label-char" style="--index: 10">6</span>
+                            <span class="label-char" style="--index: 11">&nbsp;</span>
+                            <span class="label-char" style="--index: 12">ห</span>
+                            <span class="label-char" style="--index: 13">ลั</span>
+                            <span class="label-char" style="--index: 14">ก</span>
+                        </label>
+                    </div>
+
+                    <div class="wave-group">
+                        <input required type="password" id="reg-pin-confirm" class="input" maxlength="6" autocomplete="off" />
+                        <span class="bar"></span>
+                        <label class="label">
+                            <span class="label-char" style="--index: 0">ยื</span>
+                            <span class="label-char" style="--index: 1">น</span>
+                            <span class="label-char" style="--index: 2">ยั</span>
+                            <span class="label-char" style="--index: 3">น</span>
+                            <span class="label-char" style="--index: 4">ร</span>
+                            <span class="label-char" style="--index: 5">หั</span>
+                            <span class="label-char" style="--index: 6">ส</span>
+                            <span class="label-char" style="--index: 7">&nbsp;</span>
+                            <span class="label-char" style="--index: 8">P</span>
+                            <span class="label-char" style="--index: 9">I</span>
+                            <span class="label-char" style="--index: 10">N</span>
+                            <span class="label-char" style="--index: 11">&nbsp;</span>
+                            <span class="label-char" style="--index: 12">6</span>
+                            <span class="label-char" style="--index: 13">&nbsp;</span>
+                            <span class="label-char" style="--index: 14">ห</span>
+                            <span class="label-char" style="--index: 15">ลั</span>
+                            <span class="label-char" style="--index: 16">ก</span>
+                        </label>
+                    </div>
+                    
+                    <span class="owner">Thomas.F</span>
+                </div>
+
+                <button class="btn-primary" style="background: var(--bbl-orange); width: 100%;" onclick="doRegister()">ยืนยันการสมัคร</button>
+                <div class="text-link" onclick="switchScreen('login-scr')">กลับไปหน้าเข้าสู่ระบบ</div>
             </div>
-            <input type="text" id="reg-name" class="center" placeholder="ตั้งชื่อผู้ใช้งาน">
-            <input type="password" id="reg-pin" class="center" placeholder="ตั้งรหัส PIN 6 หลัก" maxlength="6">
-            <input type="password" id="reg-pin-confirm" class="center" placeholder="ยืนยันรหัส PIN 6 หลัก" maxlength="6">
-            <button class="btn-primary" style="background: var(--bbl-orange);" onclick="doRegister()">ยืนยันการสมัคร</button>
-            <div class="text-link" onclick="switchScreen('login-scr')">กลับไปหน้าเข้าสู่ระบบ</div>
+
         </div>
 
         <!-- หน้า Dashboard หลัก -->
         <div id="main-scr" class="screen">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
                 <div style="display:flex; align-items:center;">
-                    <img id="profile-img-main" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23cccccc'/><text x='50%' y='50%' font-size='12' fill='white' text-anchor='middle' dominant-baseline='middle'>โปรไฟล์</text></svg>" class="profile-img" onclick="document.getElementById('upload-profile').click()" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์ของคุณ">
-                    <strong style="color:var(--bbl-blue);"><span id="user-show">ผู้ใช้งาน</span></strong>
+                    <!-- กดที่รูปจะเรียกเปิด MASTERCARD Popup -->
+                    <img id="profile-img-main" src="" class="profile-img" onclick="openMastercardPopup()" title="แตะเพื่อดูบัตร MASTERCARD ของคุณ">
+                    <div style="display:flex; flex-direction:column;">
+                        <strong style="color:var(--bbl-blue); font-size:1.1rem; line-height: 1;"><span id="nickname-show"></span></strong>
+                        <span style="color:#666; font-size:0.85rem;">@<span id="user-show">ผู้ใช้งาน</span></span>
+                    </div>
                 </div>
                 <div>
-                    <button onclick="switchScreen('pin-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">เปลี่ยนรหัส PIN</button>
+                    <button onclick="switchScreen('profile-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">ข้อมูลส่วนตัว</button>
                     <button onclick="location.reload()" style="background:#eee; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">ออกจากระบบ</button>
                 </div>
             </div>
@@ -208,16 +416,100 @@
             </div>
         </div>
 
-        <!-- หน้าเปลี่ยน PIN -->
-        <div id="pin-scr" class="screen">
-            <div class="bbl-header"><h2>เปลี่ยนรหัส PIN</h2><div class="bbl-line"></div></div>
-            <input type="password" id="old-pin" class="center" placeholder="รหัส PIN เก่า 6 หลัก" maxlength="6">
-            <input type="password" id="new-pin" class="center" placeholder="รหัส PIN ใหม่ 6 หลัก" maxlength="6">
-            <input type="password" id="new-pin-confirm" class="center" placeholder="ยืนยันรหัส PIN ใหม่" maxlength="6">
-            <button class="btn-primary" onclick="changePin()">บันทึกรหัสผ่านใหม่</button>
-            <button onclick="switchScreen('main-scr')" style="width:100%; padding:14px; border:none; background:#eee; border-radius:6px; font-weight:bold; cursor:pointer;">ยกเลิก</button>
+        <!-- หน้า ข้อมูลส่วนตัว (อัปโหลดรูปและเปลี่ยนรหัส) -->
+        <div id="profile-scr" class="screen">
+            <div class="bbl-header"><h2>ข้อมูลส่วนตัว</h2><div class="bbl-line"></div></div>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img id="profile-preview" src="" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bbl-blue); margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <br>
+                <button onclick="document.getElementById('upload-profile-input').click()" style="background:#fff; border:1px solid var(--bbl-blue); color:var(--bbl-blue); padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:bold; cursor:pointer;">📷 อัปโหลดรูปโปรไฟล์</button>
+                <input type="file" id="upload-profile-input" accept="image/*" hidden onchange="handleImageSelectForCrop(event)">
+            </div>
+
+            <label style="font-size:0.85rem; color:var(--bbl-blue); font-weight:bold; margin-bottom: 5px; display:block;">ชื่อเล่น (แสดงบนหน้าหลักและบัตร)</label>
+            <input type="text" id="edit-nickname" class="center" placeholder="กรอกชื่อเล่นของคุณ">
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; margin-bottom: 20px; border: 1px solid #eee;">
+                <label style="font-size:0.85rem; color:var(--bbl-orange); font-weight:bold; margin-bottom: 10px; display:block;">เปลี่ยนรหัส PIN (เว้นว่างไว้หากไม่ต้องการเปลี่ยน)</label>
+                <input type="password" id="edit-old-pin" class="center" placeholder="รหัส PIN เก่า 6 หลัก" maxlength="6">
+                <input type="password" id="edit-new-pin" class="center" placeholder="รหัส PIN ใหม่ 6 หลัก" maxlength="6">
+                <input type="password" id="edit-new-pin-confirm" class="center" placeholder="ยืนยันรหัส PIN ใหม่" maxlength="6">
+            </div>
+
+            <button class="btn-primary" onclick="saveProfileData()">บันทึกข้อมูลส่วนตัว</button>
+            <button onclick="switchScreen('main-scr')" style="width:100%; padding:14px; border:none; background:#ddd; color:#333; border-radius:6px; font-weight:bold; cursor:pointer;">ยกเลิก / กลับหน้าหลัก</button>
         </div>
 
+    </div>
+
+    <!-- Modal สำหรับครอปรูป -->
+    <div id="crop-modal" class="crop-modal-overlay">
+        <div class="crop-modal-content">
+            <h3 style="text-align:center; color:var(--bbl-blue); margin-bottom:15px;">ปรับตำแหน่งรูปภาพ</h3>
+            <div class="crop-container">
+                <img id="image-to-crop" src="">
+            </div>
+            <div style="display:flex; gap:10px; margin-top: 15px;">
+                <button onclick="confirmCrop()" style="flex:1; padding:12px; border:none; background:var(--bbl-blue); color:white; border-radius:6px; font-weight:bold; cursor:pointer;">ยืนยันการตัดรูป</button>
+                <button onclick="cancelCrop()" style="flex:1; padding:12px; border:none; background:#eee; color:#333; border-radius:6px; font-weight:bold; cursor:pointer;">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal สำหรับแสดง MASTERCARD -->
+    <div id="mc-modal" class="crop-modal-overlay" onclick="closeMastercardPopup()">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:20px;" onclick="event.stopPropagation()">
+            
+            <div class="flip-card" id="mc-card-element" onclick="flipCard()">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <p class="heading_8264">MASTERCARD</p>
+                        
+                        <!-- ชิปสีทอง (EMV Chip) -->
+                        <svg class="chip" viewBox="0 0 50 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="50" height="38" rx="6" fill="#F0C375"/>
+                            <path d="M14 0V38M36 0V38M0 12H14M0 26H14M50 12H36M50 26H36M14 19H36" stroke="#4A3D24" stroke-width="1.2" opacity="0.7"/>
+                            <path d="M14 8C19 8 21 12 25 12C29 12 31 8 36 8M14 30C19 30 21 26 25 26C29 26 31 30 36 30" stroke="#4A3D24" stroke-width="1.2" opacity="0.7"/>
+                        </svg>
+
+                        <!-- ไอคอนแตะจ่าย (Contactless) ที่ถูกแก้เรื่องการแสดงผลแล้ว -->
+                        <svg class="contactless" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M6 12v.01" />
+                            <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M10 8.5a5 5 0 0 1 0 7" />
+                            <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M14 5.5a10 10 0 0 1 0 13" />
+                            <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M18 2.5a15 15 0 0 1 0 19" />
+                        </svg>
+
+                        <p class="number" id="mc-number">XXXX XXXX XXXX XXXX</p>
+                        <p class="date_8264" id="mc-expiry">XX / XX</p>
+                        <p class="name" id="mc-name">USERNAME</p>
+
+                        <!-- โลโก้ Mastercard -->
+                        <svg class="logo" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="36" height="36" viewBox="0 0 48 48">
+                            <path fill="#ff9800" d="M32 10A14 14 0 1 0 32 38A14 14 0 1 0 32 10Z"></path>
+                            <path fill="#d50000" d="M16 10A14 14 0 1 0 16 38A14 14 0 1 0 16 10Z"></path>
+                            <path fill="#ff3d00" d="M18,24c0,4.755,2.376,8.95,6,11.48c3.624-2.53,6-6.725,6-11.48s-2.376-8.95-6-11.48 C20.376,15.05,18,19.245,18,24z"></path>
+                        </svg>
+                    </div>
+                    <div class="flip-card-back">
+                        <div class="strip"></div>
+                        <div class="mstrip"></div>
+                        <!-- กดค้างเพื่อดู CVV -->
+                        <div class="sstrip" id="mc-cvv-btn">
+                            <p class="code" id="mc-cvv-text">***</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="color: white; font-size: 0.85rem; text-align: center;">
+                 <strong>แตะที่บัตร</strong> เพื่อพลิกดูด้านหลัง<br>
+                 <strong>กดค้างที่ ***</strong> เพื่อดูรหัส CVV
+            </div>
+            <button onclick="closeMastercardPopup()" style="padding:10px 25px; border-radius:20px; border:none; background:var(--bbl-orange); color:white; font-weight:bold; cursor:pointer;">ปิดหน้าต่าง</button>
+            
+        </div>
     </div>
 
     <script>
@@ -226,32 +518,16 @@
         const sb = supabase.createClient(SB_URL, SB_KEY);
         
         let currentUser = "";
+        let currentNickname = "";
+        let tempProfileB64 = ""; 
+        let cropper = null;
+        let mastercardCVV = "***";
+
+        const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23cccccc'/><text x='50%' y='50%' font-size='12' fill='white' text-anchor='middle' dominant-baseline='middle'>รูป</text></svg>";
+
         const thaiMonthsFull = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-        // โหลดรูปโปรไฟล์เฉพาะผู้ใช้จาก LocalStorage
-        function loadSavedProfile() {
-            const savedProfile = localStorage.getItem('userProfile');
-            if (savedProfile) {
-                document.getElementById('profile-img-main').src = savedProfile;
-            }
-        }
-        loadSavedProfile();
-
-        function handleProfileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64 = e.target.result;
-                    localStorage.setItem('userProfile', base64);
-                    document.getElementById('profile-img-main').src = base64;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // ระบบเวลา Real-time
         function updateClock() {
             const now = new Date();
             const d = now.getDate();
@@ -310,6 +586,160 @@
             document.getElementById(id).classList.add('active');
         }
 
+        // ระบบครอบรูป (Cropper.js)
+        function handleImageSelectForCrop(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('image-to-crop').src = e.target.result;
+                    document.getElementById('crop-modal').style.display = 'flex';
+                    
+                    if (cropper) { cropper.destroy(); }
+                    
+                    cropper = new Cropper(document.getElementById('image-to-crop'), {
+                        aspectRatio: 1, 
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 1,
+                        restore: false,
+                        guides: false,
+                        center: false,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+            event.target.value = ''; 
+        }
+
+        function confirmCrop() {
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+            tempProfileB64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            document.getElementById('profile-preview').src = tempProfileB64;
+            
+            document.getElementById('crop-modal').style.display = 'none';
+            cropper.destroy();
+            cropper = null;
+        }
+
+        function cancelCrop() {
+            document.getElementById('crop-modal').style.display = 'none';
+            if(cropper) { cropper.destroy(); cropper = null; }
+        }
+
+        // --- ระบบ MASTERCARD ---
+        function generateMastercard(username) {
+            let data = localStorage.getItem(`mastercard_${username}`);
+            let now = new Date();
+            let cardNum, cvv;
+            
+            if (data) {
+                data = JSON.parse(data);
+                cardNum = data.number;
+                cvv = data.cvv;
+                
+                // ตรวจสอบวันหมดอายุ (หมดอายุหลังจาก 1 เดือน)
+                if (now > new Date(data.expiryFull)) {
+                    // หากหมดอายุแล้ว สุ่มแค่วันหมดอายุใหม่ ไม่สุ่มเลขบัตร 16 หลักและ CVV ใหม่
+                    let expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + 1);
+                    
+                    let expM = (expiryDate.getMonth() + 1).toString().padStart(2, '0');
+                    let expY = expiryDate.getFullYear().toString().slice(-2);
+                    let displayExpiry = `${expM}/${expY}`;
+
+                    data.expiryFull = expiryDate.toISOString();
+                    data.displayExpiry = displayExpiry;
+                    
+                    localStorage.setItem(`mastercard_${username}`, JSON.stringify(data));
+                }
+            } else {
+                // หากยังไม่เคยมีบัตร สุ่มใหม่ทั้งหมดเป็นครั้งแรก
+                let block1 = "5" + Math.floor(100 + Math.random() * 900).toString().padStart(3, '0');
+                let block2 = Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
+                let block3 = Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
+                let block4 = Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
+                cardNum = `${block1} ${block2} ${block3} ${block4}`;
+                
+                cvv = Math.floor(100 + Math.random() * 900).toString().padStart(3, '0');
+                
+                // เซ็ตวันหมดอายุไปอีก 1 เดือนนับจากปัจจุบัน
+                let expiryDate = new Date();
+                expiryDate.setMonth(expiryDate.getMonth() + 1);
+                
+                let expM = (expiryDate.getMonth() + 1).toString().padStart(2, '0');
+                let expY = expiryDate.getFullYear().toString().slice(-2);
+                let displayExpiry = `${expM}/${expY}`;
+
+                data = {
+                    number: cardNum,
+                    cvv: cvv,
+                    expiryFull: expiryDate.toISOString(),
+                    displayExpiry: displayExpiry
+                };
+                localStorage.setItem(`mastercard_${username}`, JSON.stringify(data));
+            }
+            return data;
+        }
+
+        function openMastercardPopup() {
+            if(!currentUser) return;
+            
+            let mcData = generateMastercard(currentUser);
+            mastercardCVV = mcData.cvv;
+            
+            document.getElementById('mc-number').innerText = mcData.number;
+            document.getElementById('mc-expiry').innerText = mcData.displayExpiry;
+            
+            // ชื่อแสดงเป็นตัวพิมพ์ใหญ่เสมอตามที่กำหนด
+            document.getElementById('mc-name').innerText = (currentNickname || currentUser).toUpperCase();
+            document.getElementById('mc-cvv-text').innerText = "***";
+            
+            // รีเซ็ตบัตรให้แสดงด้านหน้าเสมอตอนเปิด
+            document.getElementById('mc-card-element').classList.remove('flipped');
+            
+            document.getElementById('mc-modal').style.display = 'flex';
+        }
+
+        function closeMastercardPopup() {
+            document.getElementById('mc-modal').style.display = 'none';
+        }
+
+        function flipCard() {
+            document.getElementById('mc-card-element').classList.toggle('flipped');
+        }
+
+        // Event สำหรับกดค้างเพื่อดู CVV
+        const cvvBtn = document.getElementById('mc-cvv-btn');
+        const cvvText = document.getElementById('mc-cvv-text');
+
+        function showCVV(e) {
+            e.preventDefault(); 
+            e.stopPropagation();
+            cvvText.innerText = mastercardCVV;
+        }
+
+        function hideCVV(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            cvvText.innerText = "***";
+        }
+
+        cvvBtn.addEventListener('mousedown', showCVV);
+        cvvBtn.addEventListener('mouseup', hideCVV);
+        cvvBtn.addEventListener('mouseleave', hideCVV);
+        cvvBtn.addEventListener('touchstart', showCVV);
+        cvvBtn.addEventListener('touchend', hideCVV);
+
+        // ป้องกันไม่ให้บัตรพลิกถ้ากดโดนช่อง CVV พอดี
+        cvvBtn.addEventListener('click', (e) => e.stopPropagation());
+
         async function doRegister() {
             const u = document.getElementById('reg-name').value;
             const p = document.getElementById('reg-pin').value;
@@ -341,26 +771,58 @@
             const p = document.getElementById('login-pin').value;
             const { data } = await sb.from('users').select('*').eq('username', u).eq('pin', p);
             if(data?.length > 0) {
-                currentUser = u; document.getElementById('user-show').innerText = u;
-                switchScreen('main-scr'); loadData();
+                currentUser = u; 
+                currentNickname = data[0].nickname || "";
+                tempProfileB64 = data[0].profile_img || "";
+
+                document.getElementById('user-show').innerText = u;
+                document.getElementById('nickname-show').innerText = currentNickname || "ชื่อเล่น (ตั้งค่าได้ที่โปรไฟล์)";
+                
+                document.getElementById('profile-img-main').src = tempProfileB64 || defaultAvatar;
+                
+                document.getElementById('edit-nickname').value = currentNickname;
+                document.getElementById('profile-preview').src = tempProfileB64 || defaultAvatar;
+
+                switchScreen('main-scr'); 
+                loadData();
             } else alert("ชื่อผู้ใช้งาน หรือ รหัส PIN ไม่ถูกต้อง");
         }
 
-        async function changePin() {
-            const oldP = document.getElementById('old-pin').value;
-            const newP = document.getElementById('new-pin').value;
-            const confP = document.getElementById('new-pin-confirm').value;
+        async function saveProfileData() {
+            const newNick = document.getElementById('edit-nickname').value;
+            const oldP = document.getElementById('edit-old-pin').value;
+            const newP = document.getElementById('edit-new-pin').value;
+            const confP = document.getElementById('edit-new-pin-confirm').value;
 
-            if(newP !== confP) return alert("รหัส PIN ใหม่ไม่ตรงกัน");
-            if(newP.length !== 6) return alert("รหัส PIN ต้องมี 6 หลัก");
+            let updatePayload = { 
+                nickname: newNick, 
+                profile_img: tempProfileB64 
+            };
 
-            const { data } = await sb.from('users').select('*').eq('username', currentUser).eq('pin', oldP);
-            if(data?.length > 0) {
-                await sb.from('users').update({ pin: newP }).eq('username', currentUser);
-                alert("เปลี่ยนรหัส PIN สำเร็จ");
-                document.getElementById('old-pin').value = ''; document.getElementById('new-pin').value = ''; document.getElementById('new-pin-confirm').value = '';
+            if (oldP || newP || confP) {
+                const { data } = await sb.from('users').select('pin').eq('username', currentUser).eq('pin', oldP);
+                if (!data || data.length === 0) return alert("รหัส PIN เก่าไม่ถูกต้อง");
+                if (newP !== confP) return alert("รหัส PIN ใหม่ไม่ตรงกัน");
+                if (newP.length !== 6) return alert("รหัส PIN ต้องมี 6 หลัก");
+                updatePayload.pin = newP;
+            }
+
+            const { error } = await sb.from('users').update(updatePayload).eq('username', currentUser);
+            
+            if (error) {
+                alert("บันทึกข้อมูลล้มเหลว!\n\nกรุณาเพิ่ม Column: 'nickname' (ชนิด: text) และ 'profile_img' (ชนิด: text) ในตาราง 'users' บน Supabase ก่อนใช้งาน\n\nข้อผิดพลาดจากระบบ: " + error.message);
+            } else {
+                alert("บันทึกข้อมูลส่วนตัวสำเร็จ!");
+                currentNickname = newNick;
+                document.getElementById('nickname-show').innerText = currentNickname || "ชื่อเล่น (ตั้งค่าได้ที่โปรไฟล์)";
+                document.getElementById('profile-img-main').src = tempProfileB64 || defaultAvatar;
+                
+                document.getElementById('edit-old-pin').value = '';
+                document.getElementById('edit-new-pin').value = '';
+                document.getElementById('edit-new-pin-confirm').value = '';
+                
                 switchScreen('main-scr');
-            } else alert("รหัส PIN เก่าไม่ถูกต้อง");
+            }
         }
 
         async function fileToGenerativePart(file) {
