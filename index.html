@@ -11,14 +11,18 @@
         :root { --bbl-blue: #0033A0; --bbl-orange: #F37021; --bg-color: #F4F5F7; }
         * { box-sizing: border-box; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg-color); display: flex; justify-content: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 450px; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow-y: auto; position: relative; }
+        .app-container { width: 100%; max-width: 900px; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow-y: auto; position: relative; }
         .screen { display: none; padding: 25px 20px; flex-direction: column; min-height: 100vh; }
         .active { display: flex; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .bbl-header { text-align: center; margin-bottom: 20px; }
-        .bbl-logo { font-size: 3rem; color: var(--bbl-blue); margin-bottom: 5px; }
-        .bbl-header h2 { color: var(--bbl-blue); font-weight: 700; }
+        
+        /* โลโก้แอป (กำหนดตายตัวในโค้ด ไม่ให้ผู้ใช้กดเปลี่ยนเอง) */
+        .app-logo-img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 10px; border-radius: 8px; }
+        .profile-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid var(--bbl-blue); margin-right: 10px; }
+        
+        .bbl-header h2 { color: var(--bbl-blue); font-weight: 700; margin-top: 10px; }
         .bbl-line { height: 4px; width: 50px; background: var(--bbl-orange); margin: 10px auto; border-radius: 2px; }
 
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
@@ -29,30 +33,58 @@
         .text-link { text-align: center; color: var(--bbl-blue); font-size: 0.9rem; cursor: pointer; text-decoration: underline; margin-top: 5px; }
 
         .scan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .btn-scan-income { background: #E8F5E9; color: #2E7D32; border: 2px dashed #2E7D32; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
-        .btn-scan-expense { background: #FFEBEE; color: #D32F2F; border: 2px dashed #D32F2F; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn-scan-income { background: #E8F5E9; color: #2E7D32; border: 2px dashed #2E7D32; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;}
+        .btn-scan-expense { background: #FFEBEE; color: #D32F2F; border: 2px dashed #D32F2F; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;}
         .scan-msg { font-size: 0.85rem; color: var(--bbl-blue); text-align: center; font-weight: bold; margin-bottom: 5px; min-height: 20px; }
         
-        .bank-filter { display: flex; gap: 8px; margin-bottom: 15px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
-        .bank-filter select { margin-bottom: 0; padding: 8px; font-size: 0.9rem; flex: 1; border: 1px solid var(--bbl-blue); color: var(--bbl-blue); font-weight: bold; border-radius: 4px;}
-        .bank-filter button { padding: 8px 12px; background: var(--bbl-orange); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .bank-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; justify-content: center;}
+        .bank-filter select { margin-bottom: 0; padding: 8px; font-size: 0.9rem; flex: 1; min-width: 120px; border: 1px solid var(--bbl-blue); color: var(--bbl-blue); font-weight: bold; border-radius: 4px; cursor: pointer;}
 
-        .table-responsive { overflow-x: auto; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        table { width: 650px; border-collapse: collapse; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 0.85rem; }
-        th { background: #f0f0f0; }
-        .col-amt { text-align: right; font-family: monospace; font-size: 0.95rem; }
-        .text-income { color: #2E7D32; font-weight: bold; }
-        .text-expense { color: #D32F2F; font-weight: bold; }
+        .summary-container { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .summary-card { flex: 1; min-width: 200px; background: #fff; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; border: 1px solid #eee; }
+        .summary-card.income { border-left: 6px solid #2E7D32; }
+        .summary-card.expense { border-left: 6px solid #D32F2F; }
+        .summary-card.balance { border-left: 6px solid var(--bbl-orange); }
+        .summary-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; color: #555; }
+        .summary-amount { font-size: 1.25rem; font-weight: 700; }
+        .summary-amount.income { color: #2E7D32; }
+        .summary-amount.expense { color: #D32F2F; }
+        .summary-amount.balance { color: var(--bbl-blue); }
+
+        .table-responsive { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; min-width: 800px; border-collapse: collapse; border: 1px solid #666; }
+        th, td { border: 1px solid #666; padding: 8px 4px; text-align: center; font-size: 0.85rem; }
+        th { background: #f9f9f9; font-weight: 600; color: #333; }
+        
+        .col-baht { text-align: right; }
+        .col-satang { text-align: center; width: 40px; }
+        .text-income { color: #2E7D32; }
+        .text-expense { color: #D32F2F; }
         .text-balance { color: var(--bbl-blue); font-weight: bold; }
+        
+        .edit-icon { cursor: pointer; width: 14px; height: 14px; margin-left: 5px; vertical-align: middle; fill: #666; transition: fill 0.2s; }
+        .edit-icon:hover { fill: var(--bbl-blue); }
+        
+        .icon-svg { width: 24px; height: 24px; }
+        .summary-icon { width: 16px; height: 16px; border-radius: 50%; }
+        
+        .realtime-text { font-size: 0.8rem; color: #666; text-align: right; margin-bottom: 10px; font-weight: 600; }
     </style>
 </head>
 <body>
     <div class="app-container">
         
+        <!-- Input สำหรับเปลี่ยนรูปโปรไฟล์เฉพาะผู้ใช้ -->
+        <input type="file" id="upload-profile" accept="image/*" hidden onchange="handleProfileUpload(event)">
+
         <!-- หน้าเข้าสู่ระบบ -->
         <div id="login-scr" class="screen active">
-            <div class="bbl-header"><div class="bbl-logo">🏦</div><h2>SCHOOL MONEY</h2><div class="bbl-line"></div></div>
+            <div class="bbl-header">
+                <!-- สามารถเปลี่ยนลิงก์รูปภาพโลโก้ตรง src ด้านล่างนี้ได้ตามต้องการ -->
+                <img src="https://via.placeholder.com/150/0033A0/FFFFFF?text=BANK" class="app-logo-img" alt="Logo">
+                <h2>SCHOOL MONEY</h2>
+                <div class="bbl-line"></div>
+            </div>
             <input type="text" id="login-name" class="center" placeholder="ชื่อผู้ใช้งาน">
             <input type="password" id="login-pin" class="center" placeholder="รหัส PIN 6 หลัก" maxlength="6">
             <button class="btn-primary" onclick="doLogin()">เข้าสู่ระบบ</button>
@@ -61,7 +93,11 @@
 
         <!-- หน้าสมัครสมาชิก -->
         <div id="register-scr" class="screen">
-            <div class="bbl-header"><div class="bbl-logo">📝</div><h2>สมัครสมาชิกใหม่</h2><div class="bbl-line"></div></div>
+            <div class="bbl-header">
+                <img src="https://via.placeholder.com/150/0033A0/FFFFFF?text=BANK" class="app-logo-img" alt="Logo">
+                <h2>สมัครสมาชิกใหม่</h2>
+                <div class="bbl-line"></div>
+            </div>
             <input type="text" id="reg-name" class="center" placeholder="ตั้งชื่อผู้ใช้งาน">
             <input type="password" id="reg-pin" class="center" placeholder="ตั้งรหัส PIN 6 หลัก" maxlength="6">
             <input type="password" id="reg-pin-confirm" class="center" placeholder="ยืนยันรหัส PIN 6 หลัก" maxlength="6">
@@ -71,34 +107,66 @@
 
         <!-- หน้า Dashboard หลัก -->
         <div id="main-scr" class="screen">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                <strong style="color:var(--bbl-blue);">👤 <span id="user-show">User</span></strong>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                <div style="display:flex; align-items:center;">
+                    <img id="profile-img-main" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23cccccc'/><text x='50%' y='50%' font-size='12' fill='white' text-anchor='middle' dominant-baseline='middle'>โปรไฟล์</text></svg>" class="profile-img" onclick="document.getElementById('upload-profile').click()" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์ของคุณ">
+                    <strong style="color:var(--bbl-blue);"><span id="user-show">ผู้ใช้งาน</span></strong>
+                </div>
                 <div>
-                    <button onclick="switchScreen('pin-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">เปลี่ยน PIN</button>
-                    <button onclick="location.reload()" style="background:#eee; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">ออกระบบ</button>
+                    <button onclick="switchScreen('pin-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">เปลี่ยนรหัส PIN</button>
+                    <button onclick="location.reload()" style="background:#eee; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">ออกจากระบบ</button>
                 </div>
             </div>
             
+            <div id="realtime-clock" class="realtime-text"></div>
+            
             <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <p style="font-weight:bold; color:var(--bbl-blue); margin-bottom:10px; text-align:center;">✨ AI สแกนสลิปอัจฉริยะ (ได้สูงสุด 8 ใบ/ครั้ง)</p>
+                <p style="font-weight:bold; color:var(--bbl-blue); margin-bottom:10px; text-align:center;">ระบบสแกนสลิปอัจฉริยะ (อัปโหลดได้สูงสุด 8 ใบ/ครั้ง)</p>
                 <div class="scan-grid">
                     <label class="btn-scan-income">
-                        🟢 อัปโหลด<br/>สลิป "รายรับ"
-                        <!-- เพิ่ม multiple ให้เลือกไฟล์ได้หลายไฟล์พร้อมกัน -->
+                        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                        อัปโหลดสลิป "รายรับ"
                         <input type="file" accept="image/*" multiple hidden onchange="processWithAI(event, 'income')">
                     </label>
                     <label class="btn-scan-expense">
-                        🔴 อัปโหลด<br/>สลิป "รายจ่าย"
-                        <!-- เพิ่ม multiple ให้เลือกไฟล์ได้หลายไฟล์พร้อมกัน -->
+                        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                        อัปโหลดสลิป "รายจ่าย"
                         <input type="file" accept="image/*" multiple hidden onchange="processWithAI(event, 'expense')">
                     </label>
                 </div>
                 <div id="status-msg" class="scan-msg"></div>
             </div>
+
+            <!-- สรุปยอด -->
+            <div class="summary-container">
+                <div class="summary-card income">
+                    <div class="summary-title">
+                        <div class="summary-icon" style="background:#2E7D32;"></div> ยอดรับรวมทั้งหมด
+                    </div>
+                    <div class="summary-amount income" id="sum-income">0.- ฿</div>
+                </div>
+                <div class="summary-card expense">
+                    <div class="summary-title">
+                        <div class="summary-icon" style="background:#D32F2F;"></div> ยอดจ่ายรวมทั้งหมด
+                    </div>
+                    <div class="summary-amount expense" id="sum-expense">0.- ฿</div>
+                </div>
+                <div class="summary-card balance">
+                    <div class="summary-title">
+                        <div class="summary-icon" style="background:var(--bbl-orange); display:flex; align-items:center; justify-content:center; font-size:10px; color:white;">฿</div> ยอดเงินคงเหลือสุทธิ
+                    </div>
+                    <div class="summary-amount balance" id="sum-balance">0.- ฿</div>
+                </div>
+            </div>
             
             <div class="bank-filter">
-                <select id="filter-month">
-                    <option value="all">รวมทุกเดือน</option>
+                <select id="filter-mode" onchange="updateFilterUI(); loadData();">
+                    <option value="daily">รายวัน</option>
+                    <option value="monthly" selected>รายเดือน</option>
+                    <option value="yearly">รายปี</option>
+                </select>
+                <select id="filter-day" onchange="loadData();"></select>
+                <select id="filter-month" onchange="loadData();">
                     <option value="01">มกราคม</option>
                     <option value="02">กุมภาพันธ์</option>
                     <option value="03">มีนาคม</option>
@@ -112,23 +180,27 @@
                     <option value="11">พฤศจิกายน</option>
                     <option value="12">ธันวาคม</option>
                 </select>
-                <select id="filter-year"></select>
-                <button onclick="loadData()">🔍 ค้นหา</button>
+                <select id="filter-year" onchange="loadData();"></select>
             </div>
 
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th rowspan="2" style="width:15%">วัน เดือน ปี</th>
-                            <th rowspan="2" style="width:25%">รายการ</th>
-                            <th colspan="2">ยอดเงิน (บาท)</th>
-                            <th rowspan="2" style="width:18%">คงเหลือ (บาท)</th>
-                            <th rowspan="2" style="width:15%">หมายเหตุ</th>
+                            <th rowspan="2" style="width:12%">วัน เดือน ปี</th>
+                            <th rowspan="2" style="width:20%">รายการ</th>
+                            <th colspan="2">รายรับ</th>
+                            <th colspan="2">รายจ่าย</th>
+                            <th colspan="2">คงเหลือ</th>
+                            <th rowspan="2" style="width:18%">หมายเหตุ</th>
                         </tr>
                         <tr>
-                            <th style="background:#E8F5E9; width:13.5%">รายรับ</th>
-                            <th style="background:#FFEBEE; width:13.5%">รายจ่าย</th>
+                            <th style="width:9%">บาท</th>
+                            <th style="width:5%">ส.ต.</th>
+                            <th style="width:9%">บาท</th>
+                            <th style="width:5%">ส.ต.</th>
+                            <th style="width:9%">บาท</th>
+                            <th style="width:5%">ส.ต.</th>
                         </tr>
                     </thead>
                     <tbody id="history-table"></tbody>
@@ -154,16 +226,82 @@
         const sb = supabase.createClient(SB_URL, SB_KEY);
         
         let currentUser = "";
+        const thaiMonthsFull = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+        const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
+        // โหลดรูปโปรไฟล์เฉพาะผู้ใช้จาก LocalStorage
+        function loadSavedProfile() {
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) {
+                document.getElementById('profile-img-main').src = savedProfile;
+            }
+        }
+        loadSavedProfile();
+
+        function handleProfileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64 = e.target.result;
+                    localStorage.setItem('userProfile', base64);
+                    document.getElementById('profile-img-main').src = base64;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // ระบบเวลา Real-time
+        function updateClock() {
+            const now = new Date();
+            const d = now.getDate();
+            const m = thaiMonthsShort[now.getMonth()];
+            const y = now.getFullYear() + 543;
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('realtime-clock').innerText = `ข้อมูล ณ วันที่ ${d} ${m} ${y} เวลา ${hours} : ${minutes} น.`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
         function setupDateFilters() {
+            const dSelect = document.getElementById('filter-day');
+            let dHtml = '';
+            for(let i = 1; i <= 31; i++) {
+                let val = i.toString().padStart(2, '0');
+                dHtml += `<option value="${val}">${val}</option>`;
+            }
+            dSelect.innerHTML = dHtml;
+
             const ySelect = document.getElementById('filter-year');
             const d = new Date();
             const curYear = d.getFullYear();
-            let yHtml = '<option value="all">รวมทุกปี</option>';
+            let yHtml = '';
             for(let i = curYear + 2; i >= curYear - 20; i--) yHtml += `<option value="${i}">${i + 543}</option>`;
             ySelect.innerHTML = yHtml;
+            
             ySelect.value = curYear.toString();
             document.getElementById('filter-month').value = (d.getMonth() + 1).toString().padStart(2, '0');
+            dSelect.value = d.getDate().toString().padStart(2, '0');
+
+            updateFilterUI();
+        }
+
+        function updateFilterUI() {
+            const mode = document.getElementById('filter-mode').value;
+            const dSelect = document.getElementById('filter-day');
+            const mSelect = document.getElementById('filter-month');
+            
+            if (mode === 'daily') {
+                dSelect.style.display = 'inline-block';
+                mSelect.style.display = 'inline-block';
+            } else if (mode === 'monthly') {
+                dSelect.style.display = 'none';
+                mSelect.style.display = 'inline-block';
+            } else if (mode === 'yearly') {
+                dSelect.style.display = 'none';
+                mSelect.style.display = 'none';
+            }
         }
         setupDateFilters();
 
@@ -185,13 +323,13 @@
             const { data: existingUser } = await sb.from('users').select('username').eq('username', u);
             if(existingUser && existingUser.length > 0) {
                 document.querySelector('#register-scr .btn-primary').innerText = "ยืนยันการสมัคร";
-                return alert("ชื่อผู้ใช้งานนี้มีคนใช้แล้ว");
+                return alert("ชื่อผู้ใช้งานนี้มีผู้ใช้งานแล้ว");
             }
 
             const { error } = await sb.from('users').insert([{ username: u, pin: p }]);
-            if(error) alert("Error: " + error.message);
+            if(error) alert("ข้อผิดพลาด: " + error.message);
             else {
-                alert("🎉 สมัครสมาชิกสำเร็จ!");
+                alert("สมัครสมาชิกสำเร็จ");
                 document.getElementById('login-name').value = u;
                 switchScreen('login-scr');
             }
@@ -205,7 +343,7 @@
             if(data?.length > 0) {
                 currentUser = u; document.getElementById('user-show').innerText = u;
                 switchScreen('main-scr'); loadData();
-            } else alert("ชื่อผู้ใช้งาน หรือ PIN ไม่ถูกต้อง");
+            } else alert("ชื่อผู้ใช้งาน หรือ รหัส PIN ไม่ถูกต้อง");
         }
 
         async function changePin() {
@@ -214,12 +352,12 @@
             const confP = document.getElementById('new-pin-confirm').value;
 
             if(newP !== confP) return alert("รหัส PIN ใหม่ไม่ตรงกัน");
-            if(newP.length !== 6) return alert("PIN ต้องมี 6 หลัก");
+            if(newP.length !== 6) return alert("รหัส PIN ต้องมี 6 หลัก");
 
             const { data } = await sb.from('users').select('*').eq('username', currentUser).eq('pin', oldP);
             if(data?.length > 0) {
                 await sb.from('users').update({ pin: newP }).eq('username', currentUser);
-                alert("เปลี่ยนรหัส PIN สำเร็จ!");
+                alert("เปลี่ยนรหัส PIN สำเร็จ");
                 document.getElementById('old-pin').value = ''; document.getElementById('new-pin').value = ''; document.getElementById('new-pin-confirm').value = '';
                 switchScreen('main-scr');
             } else alert("รหัส PIN เก่าไม่ถูกต้อง");
@@ -239,9 +377,8 @@
             const files = e.target.files;
             if(!files || files.length === 0) return;
 
-            // ตรวจสอบว่าอัปโหลดเกิน 8 ใบหรือไม่
             if (files.length > 8) {
-                alert("⚠️ คุณเลือกสลิปเกินจำนวนที่กำหนด! สามารถอัปโหลดได้สูงสุด 8 สลิปต่อครั้งครับ");
+                alert("จำนวนสลิปเกินกำหนด กรุณาอัปโหลดสูงสุด 8 สลิปต่อครั้ง");
                 e.target.value = '';
                 return;
             }
@@ -253,8 +390,7 @@
             let failCount = 0;
 
             try {
-                // ดึง API Key จากระบบหลังบ้านเพียงครั้งเดียวเพื่อประมวลผลทุกสลิป
-                statusTxt.innerText = `✨ กำลังดึงคีย์ระบบ...`;
+                statusTxt.innerText = `กำลังเชื่อมต่อระบบ...`;
                 statusTxt.style.color = "var(--bbl-blue)";
 
                 const { data: settingData, error: setErr } = await sb
@@ -264,15 +400,14 @@
                     .single();
 
                 if (setErr || !settingData || !settingData.key_value) {
-                    throw new Error("ระบบหลังบ้านยังไม่ได้ตั้งค่า API Key (กรุณาให้ Admin ตั้งค่าในหน้าหลังบ้านก่อน)");
+                    throw new Error("ระบบหลังบ้านยังไม่ได้ตั้งค่า API Key");
                 }
 
                 const apiKey = settingData.key_value;
 
-                // วนลูปประมวลผลทีละสลิป
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    statusTxt.innerText = `⏳ กำลังประมวลผลสลิปที่ ${i + 1} จากทั้งหมด ${files.length} ใบ...`;
+                    statusTxt.innerText = `กำลังประมวลผลสลิปที่ ${i + 1} จากทั้งหมด ${files.length} ใบ...`;
                     statusTxt.style.color = "var(--bbl-blue)";
 
                     try {
@@ -301,7 +436,7 @@
                         if(!response.ok) {
                             console.error(`AI Error for slip ${i + 1}:`, data.error?.message);
                             failCount++;
-                            continue; // ข้ามไปทำสลิปใบถัดไป
+                            continue; 
                         }
 
                         let rawText = data.candidates[0].content.parts[0].text;
@@ -316,7 +451,6 @@
 
                         const slipNote = `${typeName} เวลา ${result.time || '00:00'} น.`;
 
-                        // ตรวจสอบสลิปซ้ำ
                         const { data: duplicateCheck } = await sb
                             .from('transactions')
                             .select('*')
@@ -327,16 +461,16 @@
 
                         if (duplicateCheck && duplicateCheck.length > 0) {
                             failCount++;
-                            continue; // สลิปซ้ำ ข้ามไปใบถัดไป
+                            continue; 
                         }
                         
-                        // บันทึกลงฐานข้อมูล
                         const { error: dbError } = await sb.from('transactions').insert([{ 
                             username: currentUser, 
                             amount: result.amount, 
                             type: txType, 
                             date: result.date, 
-                            slip_text: slipNote
+                            slip_text: slipNote,
+                            title: 'ทำรายการ'
                         }]);
 
                         if (dbError) {
@@ -350,31 +484,67 @@
                         console.error(`Error processing slip ${i + 1}:`, fileErr);
                         failCount++;
                     }
-                } // สิ้นสุดลูปประมวลผล
+                } 
 
-                // อัปเดตสถานะสุดท้าย
-                statusTxt.innerText = `✅ สำเร็จ ${successCount} ใบ | ❌ ไม่ผ่าน/ซ้ำ ${failCount} ใบ`;
+                statusTxt.innerText = `สำเร็จ ${successCount} ใบ | ไม่ผ่านหรือซ้ำ ${failCount} ใบ`;
                 statusTxt.style.color = failCount > 0 ? (successCount > 0 ? "#F39C12" : "#D32F2F") : "#2E7D32";
                 
                 setTimeout(() => statusTxt.innerText = "", 5000);
                 loadData(); 
 
             } catch (err) {
-                statusTxt.innerText = "❌ เกิดข้อผิดพลาด: " + err.message;
+                statusTxt.innerText = "เกิดข้อผิดพลาด: " + err.message;
                 statusTxt.style.color = "red";
                 console.error(err);
             }
-            e.target.value = ''; // รีเซ็ต input สำหรับอัปโหลดรอบต่อไป
+            e.target.value = ''; 
+        }
+
+        function formatDisplayAmount(amountStr) {
+            const num = parseFloat(amountStr);
+            if(isNaN(num)) return "0.-";
+            let formatted = num.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            return formatted.replace('.00', '.-');
+        }
+
+        function splitAmount(amountStr) {
+            if (!amountStr || isNaN(amountStr)) return { baht: '', satang: '' };
+            const num = parseFloat(amountStr);
+            if (num === 0) return { baht: '', satang: '' };
+            
+            const parts = num.toFixed(2).split('.');
+            const baht = parseInt(parts[0], 10).toLocaleString('th-TH');
+            const satang = parts[1] === '00' ? '-' : parts[1];
+            return { baht, satang };
+        }
+        
+        const editIconSVG = `<svg class="edit-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+
+        async function editRecord(id, field, currentValue) {
+            const newValue = prompt(`แก้ไขข้อมูล:`, currentValue);
+            if (newValue !== null && newValue.trim() !== "") {
+                const { error } = await sb.from('transactions').update({ [field]: newValue }).eq('id', id);
+                if (error) {
+                    alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: กรุณาตรวจสอบว่ามีคอลัมน์ชื่อ '" + field + "' ในฐานข้อมูลหรือไม่");
+                } else {
+                    loadData();
+                }
+            }
         }
 
         async function loadData() {
             const { data } = await sb.from('transactions').select('*').eq('username', currentUser).order('date', {ascending: true}).order('id', {ascending: true});
             
+            const mode = document.getElementById('filter-mode').value;
+            const selDay = document.getElementById('filter-day').value;
             const selMonth = document.getElementById('filter-month').value;
             const selYear = document.getElementById('filter-year').value;
 
             let runningBalance = 0;
             let filteredData = [];
+            
+            let sumIncome = 0;
+            let sumExpense = 0;
 
             if(data) {
                 data.forEach(item => {
@@ -383,38 +553,67 @@
                     item.balance = runningBalance;
 
                     const [y, m, d] = item.date.split('-');
-                    let matchMonth = (selMonth === 'all') || (m === selMonth);
-                    let matchYear = (selYear === 'all') || (y === selYear);
+                    
+                    let isMatch = false;
+                    if (mode === 'daily') {
+                        isMatch = (y === selYear && m === selMonth && d === selDay);
+                    } else if (mode === 'monthly') {
+                        isMatch = (y === selYear && m === selMonth);
+                    } else if (mode === 'yearly') {
+                        isMatch = (y === selYear);
+                    }
 
-                    if(matchMonth && matchYear) {
+                    if(isMatch) {
                         filteredData.push(item);
+                        if(item.type === 'income') sumIncome += amt;
+                        else sumExpense += amt;
                     }
                 });
             }
+            
+            const sumBalance = sumIncome - sumExpense;
+            document.getElementById('sum-income').innerText = formatDisplayAmount(sumIncome) + ' ฿';
+            document.getElementById('sum-expense').innerText = formatDisplayAmount(sumExpense) + ' ฿';
+            document.getElementById('sum-balance').innerText = formatDisplayAmount(sumBalance) + ' ฿';
 
             filteredData.reverse();
 
             if(filteredData.length === 0) {
-                document.getElementById('history-table').innerHTML = `<tr><td colspan="5" style="padding:20px; color:#888;">ไม่มีรายการในเดือน/ปี ที่เลือก</td></tr>`;
+                document.getElementById('history-table').innerHTML = `<tr><td colspan="9" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
                 return;
             }
 
             document.getElementById('history-table').innerHTML = filteredData.map(i => {
                 const isInc = i.type === 'income';
                 const dParts = i.date.split('-');
-                const thDate = `${parseInt(dParts[2])}/${parseInt(dParts[1])}/${(parseInt(dParts[0])+543).toString().substring(2)}`;
-                const aStr = parseFloat(i.amount).toLocaleString('th-TH', {minimumFractionDigits:2});
-                const bStr = parseFloat(i.balance).toLocaleString('th-TH', {minimumFractionDigits:2});
+                const monthIndex = parseInt(dParts[1]) - 1;
+                const thDate = `${parseInt(dParts[2])} ${thaiMonthsShort[monthIndex]} ${(parseInt(dParts[0])+543)}`;
                 
-                const inCol = isInc ? `<td class="col-amt text-income">${aStr}</td>` : `<td class="col-amt">-</td>`;
-                const outCol = !isInc ? `<td class="col-amt text-expense">${aStr}</td>` : `<td class="col-amt">-</td>`;
+                const incSplit = splitAmount(isInc ? i.amount : 0);
+                const expSplit = splitAmount(!isInc ? i.amount : 0);
+                const balSplit = splitAmount(i.balance);
+                
+                const titleText = i.title || 'ทำรายการ';
+                const noteText = i.slip_text || '-';
 
                 return `<tr>
                     <td>${thDate}</td>
-                    <td style="text-align:left;">ทำรายการ</td>
-                    ${inCol}${outCol}
-                    <td class="col-amt text-balance">${bStr}</td>
-                    <td style="text-align:left;">${i.slip_text || '-'}</td>
+                    <td style="text-align:left; padding-left:10px;">
+                        <span onclick="editRecord(${i.id}, 'title', '${titleText}')" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                            ${titleText} ${editIconSVG}
+                        </span>
+                    </td>
+                    <td class="col-baht text-income">${incSplit.baht}</td>
+                    <td class="col-satang text-income">${incSplit.satang}</td>
+                    <td class="col-baht text-expense">${expSplit.baht}</td>
+                    <td class="col-satang text-expense">${expSplit.satang}</td>
+                    <td class="col-baht text-balance">${balSplit.baht}</td>
+                    <td class="col-satang text-balance">${balSplit.satang}</td>
+                    <td style="text-align:left; padding-left:10px;">
+                        <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}')" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                            ${noteText} ${editIconSVG}
+                        </span>
+                    </td>
                 </tr>`;
             }).join('');
         }
