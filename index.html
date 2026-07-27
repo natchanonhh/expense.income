@@ -11,6 +11,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- เพิ่ม Lottie Web Component -->
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js" type="module"></script>
 
     <style>
         :root { --bbl-blue: #0033A0; --bbl-orange: #F37021; --bg-color: #F4F5F7; }
@@ -311,18 +314,30 @@
 
         <!-- หน้า Dashboard หลัก -->
         <div id="main-scr" class="screen">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                <div style="display:flex; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom: 2px solid #eee; padding-bottom: 10px; gap: 10px;">
+                <div style="display:flex; align-items:center; flex: 1; min-width: 0;">
                     <!-- กดที่รูปจะเรียกเปิด MASTERCARD Popup -->
-                    <img id="profile-img-main" src="" class="profile-img" onclick="openMastercardPopup()" title="แตะเพื่อดูบัตร MASTERCARD ของคุณ">
-                    <div style="display:flex; flex-direction:column;">
-                        <strong style="color:var(--bbl-blue); font-size:1.1rem; line-height: 1;"><span id="nickname-show"></span></strong>
-                        <span style="color:#666; font-size:0.85rem;">@<span id="user-show">ผู้ใช้งาน</span></span>
+                    <img id="profile-img-main" src="" class="profile-img" onclick="openMastercardPopup()" title="แตะเพื่อดูบัตร MASTERCARD ของคุณ" style="flex-shrink: 0;">
+                    <div id="name-container" style="display:flex; flex-direction:column; flex: 1; min-width: 0; overflow: hidden;">
+                        <!-- จำกัดขนาดไม่ให้เล็กลงเกินไป หากยาวมากจะตัดทอนด้วย ... -->
+                        <strong style="color:var(--bbl-blue); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <span id="nickname-show" style="font-size: 1.1rem; transition: font-size 0.2s; display: inline-block;"></span>
+                        </strong>
+                        <span style="color:#666; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@<span id="user-show">ผู้ใช้งาน</span></span>
                     </div>
                 </div>
-                <div>
-                    <button onclick="switchScreen('profile-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">ข้อมูลส่วนตัว</button>
-                    <button onclick="location.reload()" style="background:#eee; border:none; padding:6px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">ออกจากระบบ</button>
+                
+                <!-- กลุ่มปุ่ม: ข้อมูลส่วนตัวและไอคอนออกจากระบบ ให้อยู่บรรทัดเดียวกันและไม่บีบตัว -->
+                <div style="display:flex; flex-direction:row; align-items:center; gap: 12px; flex-shrink: 0;">
+                    <button onclick="switchScreen('profile-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; white-space: nowrap; flex-shrink: 0;">ข้อมูลส่วนตัว</button>
+                    <!-- ไอคอนออกจากระบบตามภาพอ้างอิงเป๊ะๆ (ขอบดำ ลูกศรแดง ไม่โดนบีบ) -->
+                    <button onclick="location.reload()" style="background:transparent; border:none; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink: 0;" title="ออกจากระบบ">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                            <path d="M10 21H6.5C5.11929 21 4 19.8807 4 18.5V5.5C4 4.11929 5.11929 3 6.5 3H10" stroke="black" stroke-width="2.5"></path>
+                            <path d="M15 16.5L19.5 12L15 7.5" stroke="#ED1C24" stroke-width="2.5"></path>
+                            <path d="M19.5 12H8" stroke="#ED1C24" stroke-width="2.5"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
             
@@ -473,7 +488,7 @@
                             <path d="M14 8C19 8 21 12 25 12C29 12 31 8 36 8M14 30C19 30 21 26 25 26C29 26 31 30 36 30" stroke="#4A3D24" stroke-width="1.2" opacity="0.7"/>
                         </svg>
 
-                        <!-- ไอคอนแตะจ่าย (Contactless) ที่ถูกแก้เรื่องการแสดงผลแล้ว -->
+                        <!-- ไอคอนแตะจ่าย (Contactless) -->
                         <svg class="contactless" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M6 12v.01" />
                             <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M10 8.5a5 5 0 0 1 0 7" />
@@ -527,6 +542,24 @@
 
         const thaiMonthsFull = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
+        // ฟังก์ชันปรับขนาดชื่อเล่นอัตโนมัติหากยาวเกินไป
+        function adjustNicknameSize() {
+            const container = document.getElementById('name-container');
+            const nickname = document.getElementById('nickname-show');
+            if(!container || !nickname) return;
+            
+            nickname.style.fontSize = '1.1rem'; 
+            let currentSize = 1.1;
+            
+            // จำกัดขนาดเล็กสุดที่ 0.85rem จะได้ไม่อ่านยากจนเกินไป
+            while (nickname.scrollWidth > container.clientWidth && currentSize > 0.85) {
+                currentSize -= 0.05;
+                nickname.style.fontSize = currentSize + 'rem';
+            }
+        }
+
+        window.addEventListener('resize', adjustNicknameSize);
 
         function updateClock() {
             const now = new Date();
@@ -644,9 +677,7 @@
                 cardNum = data.number;
                 cvv = data.cvv;
                 
-                // ตรวจสอบวันหมดอายุ (หมดอายุหลังจาก 1 เดือน)
                 if (now > new Date(data.expiryFull)) {
-                    // หากหมดอายุแล้ว สุ่มแค่วันหมดอายุใหม่ ไม่สุ่มเลขบัตร 16 หลักและ CVV ใหม่
                     let expiryDate = new Date();
                     expiryDate.setMonth(expiryDate.getMonth() + 1);
                     
@@ -660,7 +691,6 @@
                     localStorage.setItem(`mastercard_${username}`, JSON.stringify(data));
                 }
             } else {
-                // หากยังไม่เคยมีบัตร สุ่มใหม่ทั้งหมดเป็นครั้งแรก
                 let block1 = "5" + Math.floor(100 + Math.random() * 900).toString().padStart(3, '0');
                 let block2 = Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
                 let block3 = Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
@@ -669,7 +699,6 @@
                 
                 cvv = Math.floor(100 + Math.random() * 900).toString().padStart(3, '0');
                 
-                // เซ็ตวันหมดอายุไปอีก 1 เดือนนับจากปัจจุบัน
                 let expiryDate = new Date();
                 expiryDate.setMonth(expiryDate.getMonth() + 1);
                 
@@ -696,14 +725,10 @@
             
             document.getElementById('mc-number').innerText = mcData.number;
             document.getElementById('mc-expiry').innerText = mcData.displayExpiry;
-            
-            // ชื่อแสดงเป็นตัวพิมพ์ใหญ่เสมอตามที่กำหนด
             document.getElementById('mc-name').innerText = (currentNickname || currentUser).toUpperCase();
             document.getElementById('mc-cvv-text').innerText = "***";
             
-            // รีเซ็ตบัตรให้แสดงด้านหน้าเสมอตอนเปิด
             document.getElementById('mc-card-element').classList.remove('flipped');
-            
             document.getElementById('mc-modal').style.display = 'flex';
         }
 
@@ -715,7 +740,6 @@
             document.getElementById('mc-card-element').classList.toggle('flipped');
         }
 
-        // Event สำหรับกดค้างเพื่อดู CVV
         const cvvBtn = document.getElementById('mc-cvv-btn');
         const cvvText = document.getElementById('mc-cvv-text');
 
@@ -736,8 +760,6 @@
         cvvBtn.addEventListener('mouseleave', hideCVV);
         cvvBtn.addEventListener('touchstart', showCVV);
         cvvBtn.addEventListener('touchend', hideCVV);
-
-        // ป้องกันไม่ให้บัตรพลิกถ้ากดโดนช่อง CVV พอดี
         cvvBtn.addEventListener('click', (e) => e.stopPropagation());
 
         async function doRegister() {
@@ -784,6 +806,7 @@
                 document.getElementById('profile-preview').src = tempProfileB64 || defaultAvatar;
 
                 switchScreen('main-scr'); 
+                setTimeout(adjustNicknameSize, 50); 
                 loadData();
             } else alert("ชื่อผู้ใช้งาน หรือ รหัส PIN ไม่ถูกต้อง");
         }
@@ -822,6 +845,7 @@
                 document.getElementById('edit-new-pin-confirm').value = '';
                 
                 switchScreen('main-scr');
+                setTimeout(adjustNicknameSize, 50);
             }
         }
 
