@@ -125,13 +125,12 @@
             box-shadow: 0 8px 14px 0 rgba(0, 0, 0, 0.4); position: absolute; display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 16px;
         }
         .flip-card-front {
-            background-color: #171717; /* สีพื้นดำของการ์ด */
+            background-color: #171717;
         }
         .flip-card-back {
             background-color: #171717; transform: rotateY(180deg);
         }
         
-        /* ตำแหน่งข้อความและไอคอนบนหน้าบัตร */
         .flip-card .heading_8264 { position: absolute; letter-spacing: 2px; font-size: 12px; top: 20px; right: 25px; margin: 0; }
         .flip-card .chip { position: absolute; top: 50px; left: 25px; width: 42px; height: 32px; }
         .flip-card .contactless { position: absolute; top: 85px; right: 40px; width: 22px; height: 22px; }
@@ -140,7 +139,6 @@
         .flip-card .name { position: absolute; font-weight: bold; font-size: 13px; bottom: 20px; left: 25px; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
         .flip-card .logo { position: absolute; bottom: 20px; right: 25px; width: 45px; height: auto; }
 
-        /* ด้านหลังบัตร */
         .flip-card .strip {
             position: absolute; background-color: black; width: 100%; height: 40px; top: 30px;
             background: repeating-linear-gradient(45deg, #303030, #303030 10px, #202020 10px, #202020 20px);
@@ -319,7 +317,6 @@
                     <!-- กดที่รูปจะเรียกเปิด MASTERCARD Popup -->
                     <img id="profile-img-main" src="" class="profile-img" onclick="openMastercardPopup()" title="แตะเพื่อดูบัตร MASTERCARD ของคุณ" style="flex-shrink: 0;">
                     <div id="name-container" style="display:flex; flex-direction:column; flex: 1; min-width: 0; overflow: hidden;">
-                        <!-- จำกัดขนาดไม่ให้เล็กลงเกินไป หากยาวมากจะตัดทอนด้วย ... -->
                         <strong style="color:var(--bbl-blue); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             <span id="nickname-show" style="font-size: 1.1rem; transition: font-size 0.2s; display: inline-block;"></span>
                         </strong>
@@ -327,7 +324,7 @@
                     </div>
                 </div>
                 
-                <!-- กลุ่มปุ่ม: ข้อมูลส่วนตัวและไอคอนออกจากระบบ ให้อยู่บรรทัดเดียวกันและไม่บีบตัว -->
+                <!-- กลุ่มปุ่ม: ข้อมูลส่วนตัวและไอคอนออกจากระบบ -->
                 <div style="display:flex; flex-direction:row; align-items:center; gap: 12px; flex-shrink: 0;">
                     <button onclick="switchScreen('profile-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; white-space: nowrap; flex-shrink: 0;">ข้อมูลส่วนตัว</button>
                     <!-- ไอคอนออกจากระบบตามภาพอ้างอิงเป๊ะๆ (ขอบดำ ลูกศรแดง ไม่โดนบีบ) -->
@@ -415,7 +412,8 @@
                             <th colspan="2">รายรับ</th>
                             <th colspan="2">รายจ่าย</th>
                             <th colspan="2">คงเหลือ</th>
-                            <th rowspan="2" style="width:18%">หมายเหตุ</th>
+                            <th rowspan="2" style="width:15%">หมายเหตุ</th>
+                            <th rowspan="2" style="width:5%">ลบ</th>
                         </tr>
                         <tr>
                             <th style="width:9%">บาท</th>
@@ -431,7 +429,7 @@
             </div>
         </div>
 
-        <!-- หน้า ข้อมูลส่วนตัว (อัปโหลดรูปและเปลี่ยนรหัส) -->
+        <!-- หน้า ข้อมูลส่วนตัว -->
         <div id="profile-scr" class="screen">
             <div class="bbl-header"><h2>ข้อมูลส่วนตัว</h2><div class="bbl-line"></div></div>
             
@@ -453,7 +451,12 @@
             </div>
 
             <button class="btn-primary" onclick="saveProfileData()">บันทึกข้อมูลส่วนตัว</button>
-            <button onclick="switchScreen('main-scr')" style="width:100%; padding:14px; border:none; background:#ddd; color:#333; border-radius:6px; font-weight:bold; cursor:pointer;">ยกเลิก / กลับหน้าหลัก</button>
+            <button onclick="switchScreen('main-scr')" style="width:100%; padding:14px; border:none; background:#ddd; color:#333; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom: 10px;">ยกเลิก / กลับหน้าหลัก</button>
+
+            <!-- เพิ่มส่วนการลบบัญชีตามคำขอ -->
+            <div style="margin-top: 15px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+                <button onclick="deleteAccount()" style="background:transparent; border:1px solid #D32F2F; color:#D32F2F; padding:10px 15px; border-radius:6px; font-weight:bold; cursor:pointer; width: 100%;"> ลบบัญชีผู้ใช้งาน</button>
+            </div>
         </div>
 
     </div>
@@ -481,14 +484,12 @@
                     <div class="flip-card-front">
                         <p class="heading_8264">MASTERCARD</p>
                         
-                        <!-- ชิปสีทอง (EMV Chip) -->
                         <svg class="chip" viewBox="0 0 50 38" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect width="50" height="38" rx="6" fill="#F0C375"/>
                             <path d="M14 0V38M36 0V38M0 12H14M0 26H14M50 12H36M50 26H36M14 19H36" stroke="#4A3D24" stroke-width="1.2" opacity="0.7"/>
                             <path d="M14 8C19 8 21 12 25 12C29 12 31 8 36 8M14 30C19 30 21 26 25 26C29 26 31 30 36 30" stroke="#4A3D24" stroke-width="1.2" opacity="0.7"/>
                         </svg>
 
-                        <!-- ไอคอนแตะจ่าย (Contactless) -->
                         <svg class="contactless" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M6 12v.01" />
                             <path fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M10 8.5a5 5 0 0 1 0 7" />
@@ -500,7 +501,6 @@
                         <p class="date_8264" id="mc-expiry">XX / XX</p>
                         <p class="name" id="mc-name">USERNAME</p>
 
-                        <!-- โลโก้ Mastercard -->
                         <svg class="logo" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="36" height="36" viewBox="0 0 48 48">
                             <path fill="#ff9800" d="M32 10A14 14 0 1 0 32 38A14 14 0 1 0 32 10Z"></path>
                             <path fill="#d50000" d="M16 10A14 14 0 1 0 16 38A14 14 0 1 0 16 10Z"></path>
@@ -510,7 +510,6 @@
                     <div class="flip-card-back">
                         <div class="strip"></div>
                         <div class="mstrip"></div>
-                        <!-- กดค้างเพื่อดู CVV -->
                         <div class="sstrip" id="mc-cvv-btn">
                             <p class="code" id="mc-cvv-text">***</p>
                         </div>
@@ -519,8 +518,8 @@
             </div>
             
             <div style="color: white; font-size: 0.85rem; text-align: center;">
-                👆 <strong>แตะที่บัตร</strong> เพื่อพลิกดูด้านหลัง<br>
-                👆 <strong>กดค้างที่ ***</strong> เพื่อดูรหัส CVV
+                 <strong>แตะที่บัตร</strong> เพื่อพลิกดูด้านหลัง<br>
+                 <strong>กดค้างที่ ***</strong> เพื่อดูรหัส CVV
             </div>
             <button onclick="closeMastercardPopup()" style="padding:10px 25px; border-radius:20px; border:none; background:var(--bbl-orange); color:white; font-weight:bold; cursor:pointer;">ปิดหน้าต่าง</button>
             
@@ -539,11 +538,12 @@
         let mastercardCVV = "***";
 
         const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23cccccc'/><text x='50%' y='50%' font-size='12' fill='white' text-anchor='middle' dominant-baseline='middle'>รูป</text></svg>";
+        
+        const trashIconSVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
 
         const thaiMonthsFull = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-        // ฟังก์ชันปรับขนาดชื่อเล่นอัตโนมัติหากยาวเกินไป
         function adjustNicknameSize() {
             const container = document.getElementById('name-container');
             const nickname = document.getElementById('nickname-show');
@@ -552,7 +552,6 @@
             nickname.style.fontSize = '1.1rem'; 
             let currentSize = 1.1;
             
-            // จำกัดขนาดเล็กสุดที่ 0.85rem จะได้ไม่อ่านยากจนเกินไป
             while (nickname.scrollWidth > container.clientWidth && currentSize > 0.85) {
                 currentSize -= 0.05;
                 nickname.style.fontSize = currentSize + 'rem';
@@ -619,7 +618,6 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ระบบครอบรูป (Cropper.js)
         function handleImageSelectForCrop(event) {
             const file = event.target.files[0];
             if (file) {
@@ -666,7 +664,6 @@
             if(cropper) { cropper.destroy(); cropper = null; }
         }
 
-        // --- ระบบ MASTERCARD ---
         function generateMastercard(username) {
             let data = localStorage.getItem(`mastercard_${username}`);
             let now = new Date();
@@ -846,6 +843,43 @@
                 
                 switchScreen('main-scr');
                 setTimeout(adjustNicknameSize, 50);
+            }
+        }
+
+        async function deleteAccount() {
+            const pin = prompt("คำเตือน: การลบบัญชีจะทำให้ข้อมูลทั้งหมดหายไปอย่างถาวร\n\nกรุณากรอกรหัส PIN 6 หลักเพื่อยืนยัน:");
+            if (pin === null) return; 
+            
+            if (pin.length !== 6) {
+                return alert("รหัส PIN ต้องมี 6 หลัก");
+            }
+
+            const { data } = await sb.from('users').select('pin').eq('username', currentUser).eq('pin', pin);
+            if (data && data.length > 0) {
+                if(confirm("คุณแน่ใจหรือไม่ที่จะลบบัญชีอย่างถาวร? การกระทำนี้ไม่สามารถย้อนกลับได้")) {
+                    await sb.from('transactions').delete().eq('username', currentUser);
+                    const { error } = await sb.from('users').delete().eq('username', currentUser);
+                    if (error) {
+                        alert("เกิดข้อผิดพลาด: " + error.message);
+                    } else {
+                        alert("ลบบัญชีของคุณเรียบร้อยแล้ว");
+                        localStorage.removeItem(`mastercard_${currentUser}`); 
+                        location.reload(); 
+                    }
+                }
+            } else {
+                alert("รหัส PIN ไม่ถูกต้อง ไม่สามารถลบบัญชีได้");
+            }
+        }
+
+        async function deleteTransaction(id) {
+            if(confirm("คุณต้องการลบรายการนี้ใช่หรือไม่?")) {
+                const { error } = await sb.from('transactions').delete().eq('id', id);
+                if(error) {
+                    alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
+                } else {
+                    loadData();
+                }
             }
         }
 
@@ -1065,7 +1099,7 @@
             filteredData.reverse();
 
             if(filteredData.length === 0) {
-                document.getElementById('history-table').innerHTML = `<tr><td colspan="9" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
+                document.getElementById('history-table').innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
                 return;
             }
 
@@ -1099,6 +1133,9 @@
                         <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}')" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
                             ${noteText} ${editIconSVG}
                         </span>
+                    </td>
+                    <td style="text-align:center;">
+                        <span onclick="deleteTransaction(${i.id})" style="cursor:pointer;" title="ลบรายการ">${trashIconSVG}</span>
                     </td>
                 </tr>`;
             }).join('');
