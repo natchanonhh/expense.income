@@ -6,14 +6,13 @@
     <title>Income & Expense Hub - Smart AI Scanner</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     
-    <!-- เพิ่ม Library สำหรับครอปรูปภาพ (Cropper.js) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- เพิ่ม Lottie Web Component -->
     <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
 
     <style>
         :root { --bbl-blue: #0033A0; --bbl-orange: #F37021; --bg-color: #F4F5F7; }
@@ -43,6 +42,9 @@
         .scan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .btn-scan-income { background: #E8F5E9; color: #2E7D32; border: 2px dashed #2E7D32; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;}
         .btn-scan-expense { background: #FFEBEE; color: #D32F2F; border: 2px dashed #D32F2F; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;}
+        
+        .btn-scan-dorm { background: #E8F5E9; color: #2E7D32; border: 2px dashed #2E7D32; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-bottom: 15px;}
+        
         .scan-msg { font-size: 0.85rem; color: var(--bbl-blue); text-align: center; font-weight: bold; margin-bottom: 5px; min-height: 20px; }
         
         .bank-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; justify-content: center;}
@@ -61,7 +63,7 @@
 
         .table-responsive { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; min-width: 800px; border-collapse: collapse; border: 1px solid #666; }
-        th, td { border: 1px solid #666; padding: 8px 4px; text-align: center; font-size: 0.85rem; }
+        th, td { border: 1px solid #666; padding: 8px 4px; text-align: center; font-size: 0.85rem; vertical-align: middle;}
         th { background: #f9f9f9; font-weight: 600; color: #333; }
         
         .col-baht { text-align: right; }
@@ -78,13 +80,13 @@
         
         .realtime-text { font-size: 0.8rem; color: #666; text-align: right; margin-bottom: 10px; font-weight: 600; }
         
-        /* สไตล์สำหรับ Modal และ Overlay */
         .crop-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
         .crop-modal-content { width: 90%; max-width: 400px; background: white; padding: 20px; border-radius: 12px; }
         .crop-container { width: 100%; max-height: 350px; overflow: hidden; margin-bottom: 15px; background: #f0f0f0; }
         .crop-container img { max-width: 100%; }
 
-        /* --- สไตล์ส่วนตัวสำหรับการ์ดหน้าล็อคอินและสมัคร --- */
+        .image-viewer-content { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+
         .auth-wrapper { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center; }
         .card {
             background: radial-gradient(circle, white 0%, #d5d5d5 100%);
@@ -108,28 +110,17 @@
         .wave-group .bar:after { right: 50%; }
         .wave-group .input:focus ~ .bar:before, .wave-group .input:focus ~ .bar:after { width: 50%; }
 
-        /* --- สไตล์สำหรับ MASTERCARD UI (Flip Card) ปรับปรุงใหม่ --- */
         .flip-card {
-            background-color: transparent;
-            width: 320px; 
-            height: 200px;
-            perspective: 1000px;
-            color: white;
-            font-family: 'Sarabun', sans-serif;
-            margin: 0 auto;
-            cursor: pointer;
+            background-color: transparent; width: 320px; height: 200px; perspective: 1000px;
+            color: white; font-family: 'Sarabun', sans-serif; margin: 0 auto; cursor: pointer;
         }
         .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s; transform-style: preserve-3d; }
         .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
         .flip-card-front, .flip-card-back {
             box-shadow: 0 8px 14px 0 rgba(0, 0, 0, 0.4); position: absolute; display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 16px;
         }
-        .flip-card-front {
-            background-color: #171717;
-        }
-        .flip-card-back {
-            background-color: #171717; transform: rotateY(180deg);
-        }
+        .flip-card-front { background-color: #171717; }
+        .flip-card-back { background-color: #171717; transform: rotateY(180deg); }
         
         .flip-card .heading_8264 { position: absolute; letter-spacing: 2px; font-size: 12px; top: 20px; right: 25px; margin: 0; }
         .flip-card .chip { position: absolute; top: 50px; left: 25px; width: 42px; height: 32px; }
@@ -151,12 +142,10 @@
 <body>
     <div class="app-container">
 
-        <!-- Input สำหรับเปลี่ยนรูปโปรไฟล์เฉพาะผู้ใช้ -->
         <input type="file" id="upload-profile" accept="image/*" hidden onchange="handleProfileUpload(event)">
+        <input type="file" id="upload-contract-input" accept="image/*" hidden onchange="handleContractUpload(event)">
 
-        <!-- หน้าเข้าสู่ระบบ -->
         <div id="login-scr" class="screen active" style="justify-content: center; align-items: center; background: #ffffff;">
-            
             <div class="auth-wrapper">
                 <div class="bbl-header">
                     <img src="https://i.postimg.cc/Qd3k6GRY/USK.png" class="app-logo-img" alt="Logo">
@@ -209,19 +198,15 @@
                             <span class="label-char" style="--index: 12">ก</span>
                         </label>
                     </div>
-                    
                     <span class="owner">Thomas.F</span>
                 </div>
 
                 <button class="btn-primary" style="width: 100%;" onclick="doLogin()">เข้าสู่ระบบ</button>
                 <div class="text-link" onclick="switchScreen('register-scr')">สมัครสมาชิกใหม่</div>
             </div>
-
         </div>
 
-        <!-- หน้าสมัครสมาชิก -->
         <div id="register-scr" class="screen" style="justify-content: center; align-items: center; background: #ffffff;">
-            
             <div class="auth-wrapper">
                 <div class="bbl-header">
                     <img src="https://i.postimg.cc/Qd3k6GRY/USK.png" class="app-logo-img" alt="Logo">
@@ -300,34 +285,28 @@
                             <span class="label-char" style="--index: 16">ก</span>
                         </label>
                     </div>
-                    
                     <span class="owner">Thomas.F</span>
                 </div>
 
                 <button class="btn-primary" style="background: var(--bbl-orange); width: 100%;" onclick="doRegister()">ยืนยันการสมัคร</button>
                 <div class="text-link" onclick="switchScreen('login-scr')">กลับไปหน้าเข้าสู่ระบบ</div>
             </div>
-
         </div>
 
-        <!-- หน้า Dashboard หลัก -->
         <div id="main-scr" class="screen">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom: 2px solid #eee; padding-bottom: 10px; gap: 10px;">
                 <div style="display:flex; align-items:center; flex: 1; min-width: 0;">
-                    <!-- กดที่รูปจะเรียกเปิด MASTERCARD Popup -->
                     <img id="profile-img-main" src="" class="profile-img" onclick="openMastercardPopup()" title="แตะเพื่อดูบัตร MASTERCARD ของคุณ" style="flex-shrink: 0;">
-                    <div id="name-container" style="display:flex; flex-direction:column; flex: 1; min-width: 0; overflow: hidden;">
+                    <div id="name-container-main" style="display:flex; flex-direction:column; flex: 1; min-width: 0; overflow: hidden;">
                         <strong style="color:var(--bbl-blue); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            <span id="nickname-show" style="font-size: 1.1rem; transition: font-size 0.2s; display: inline-block;"></span>
+                            <span class="nickname-show" style="font-size: 1.1rem; transition: font-size 0.2s; display: inline-block;"></span>
                         </strong>
-                        <span style="color:#666; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@<span id="user-show">ผู้ใช้งาน</span></span>
+                        <span style="color:#666; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@<span class="user-show">ผู้ใช้งาน</span></span>
                     </div>
                 </div>
                 
-                <!-- กลุ่มปุ่ม: ข้อมูลส่วนตัวและไอคอนออกจากระบบ -->
                 <div style="display:flex; flex-direction:row; align-items:center; gap: 12px; flex-shrink: 0;">
                     <button onclick="switchScreen('profile-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; white-space: nowrap; flex-shrink: 0;">ข้อมูลส่วนตัว</button>
-                    <!-- ไอคอนออกจากระบบตามภาพอ้างอิงเป๊ะๆ (ขอบดำ ลูกศรแดง ไม่โดนบีบ) -->
                     <button onclick="location.reload()" style="background:transparent; border:none; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink: 0;" title="ออกจากระบบ">
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
                             <path d="M10 21H6.5C5.11929 21 4 19.8807 4 18.5V5.5C4 4.11929 5.11929 3 6.5 3H10" stroke="black" stroke-width="2.5"></path>
@@ -338,7 +317,7 @@
                 </div>
             </div>
             
-            <div id="realtime-clock" class="realtime-text"></div>
+            <div id="realtime-clock-main" class="realtime-text"></div>
             
             <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <p style="font-weight:bold; color:var(--bbl-blue); margin-bottom:10px; text-align:center;">ระบบสแกนสลิปอัจฉริยะ (อัปโหลดได้สูงสุด 8 ใบ/ครั้ง)</p>
@@ -354,27 +333,22 @@
                         <input type="file" accept="image/*" multiple hidden onchange="processWithAI(event, 'expense')">
                     </label>
                 </div>
-                <div id="status-msg" class="scan-msg"></div>
+                <div id="status-msg-main" class="scan-msg"></div>
+                
+                <button id="dorm-access-btn" class="btn-primary" style="margin-top: 10px; margin-bottom: 0; display: none;" onclick="switchScreen('dorm-scr'); loadDormData();">รายละเอียดข้อมูลหอพัก</button>
             </div>
 
-            <!-- สรุปยอด -->
             <div class="summary-container">
                 <div class="summary-card income">
-                    <div class="summary-title">
-                        <div class="summary-icon" style="background:#2E7D32;"></div> ยอดรับรวมทั้งหมด
-                    </div>
+                    <div class="summary-title"><div class="summary-icon" style="background:#2E7D32;"></div> ยอดรับรวมทั้งหมด</div>
                     <div class="summary-amount income" id="sum-income">0.- ฿</div>
                 </div>
                 <div class="summary-card expense">
-                    <div class="summary-title">
-                        <div class="summary-icon" style="background:#D32F2F;"></div> ยอดจ่ายรวมทั้งหมด
-                    </div>
+                    <div class="summary-title"><div class="summary-icon" style="background:#D32F2F;"></div> ยอดจ่ายรวมทั้งหมด</div>
                     <div class="summary-amount expense" id="sum-expense">0.- ฿</div>
                 </div>
                 <div class="summary-card balance">
-                    <div class="summary-title">
-                        <div class="summary-icon" style="background:var(--bbl-orange); display:flex; align-items:center; justify-content:center; font-size:10px; color:white;">฿</div> ยอดเงินคงเหลือสุทธิ
-                    </div>
+                    <div class="summary-title"><div class="summary-icon" style="background:var(--bbl-orange); display:flex; align-items:center; justify-content:center; font-size:10px; color:white;">฿</div> ยอดเงินคงเหลือสุทธิ</div>
                     <div class="summary-amount balance" id="sum-balance">0.- ฿</div>
                 </div>
             </div>
@@ -429,7 +403,91 @@
             </div>
         </div>
 
-        <!-- หน้า ข้อมูลส่วนตัว -->
+        <div id="dorm-scr" class="screen">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom: 2px solid #eee; padding-bottom: 10px; gap: 10px;">
+                <div style="display:flex; align-items:center; flex: 1; min-width: 0;">
+                    <img id="profile-img-dorm" src="" class="profile-img" onclick="openMastercardPopup()" title="แตะเพื่อดูบัตร MASTERCARD ของคุณ" style="flex-shrink: 0;">
+                    <div id="name-container-dorm" style="display:flex; flex-direction:column; flex: 1; min-width: 0; overflow: hidden;">
+                        <strong style="color:var(--bbl-blue); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <span class="nickname-show" style="font-size: 1.1rem; transition: font-size 0.2s; display: inline-block;"></span>
+                        </strong>
+                        <span style="color:#666; font-size:0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@<span class="user-show">ผู้ใช้งาน</span></span>
+                    </div>
+                </div>
+                
+                <div style="display:flex; flex-direction:row; align-items:center; gap: 12px; flex-shrink: 0;">
+                    <button onclick="switchScreen('profile-scr')" style="background:var(--bbl-orange); color:white; border:none; padding:6px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; white-space: nowrap; flex-shrink: 0;">ข้อมูลส่วนตัว</button>
+                    <button onclick="location.reload()" style="background:transparent; border:none; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink: 0;" title="ออกจากระบบ">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                            <path d="M10 21H6.5C5.11929 21 4 19.8807 4 18.5V5.5C4 4.11929 5.11929 3 6.5 3H10" stroke="black" stroke-width="2.5"></path>
+                            <path d="M15 16.5L19.5 12L15 7.5" stroke="#ED1C24" stroke-width="2.5"></path>
+                            <path d="M19.5 12H8" stroke="#ED1C24" stroke-width="2.5"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="realtime-clock-dorm" class="realtime-text"></div>
+
+            <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <p style="font-weight:bold; color:var(--bbl-blue); margin-bottom:10px; text-align:center;">ระบบสแกนสลิปอัจฉริยะ</p>
+                <label class="btn-scan-dorm">
+                    <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    อัปโหลดสลิป "ค่าหอพัก"
+                    <input type="file" accept="image/*" multiple hidden onchange="processDormSlip(event)">
+                </label>
+                <div id="status-msg-dorm" class="scan-msg"></div>
+
+                <button id="contract-btn" style="width: 100%; padding: 14px; background: #0033A0; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-bottom: 0;">หนังสือสัญญา</button>
+            </div>
+            
+            <div class="bank-filter">
+                <select id="dorm-filter-mode" onchange="updateDormFilterUI(); loadDormData();">
+                    <option value="daily">รายวัน</option>
+                    <option value="monthly" selected>รายเดือน</option>
+                    <option value="yearly">รายปี</option>
+                </select>
+                <select id="dorm-filter-day" onchange="loadDormData();"></select>
+                <select id="dorm-filter-month" onchange="loadDormData();">
+                    <option value="01">มกราคม</option>
+                    <option value="02">กุมภาพันธ์</option>
+                    <option value="03">มีนาคม</option>
+                    <option value="04">เมษายน</option>
+                    <option value="05">พฤษภาคม</option>
+                    <option value="06">มิถุนายน</option>
+                    <option value="07">กรกฎาคม</option>
+                    <option value="08">สิงหาคม</option>
+                    <option value="09">กันยายน</option>
+                    <option value="10">ตุลาคม</option>
+                    <option value="11">พฤศจิกายน</option>
+                    <option value="12">ธันวาคม</option>
+                </select>
+                <select id="dorm-filter-year" onchange="loadDormData();"></select>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:10%; min-width: 80px;">วัน เดือน ปี</th>
+                            <th style="width:15%; min-width: 100px;">รายการ</th>
+                            <th style="width:10%; min-width: 80px;">ค่าหอพัก</th>
+                            <th style="width:10%; min-width: 80px;">ค่าน้ำ</th>
+                            <th style="width:10%; min-width: 80px;">ค่าไฟ</th>
+                            <th style="width:10%; min-width: 90px;">ยอดรวม</th>
+                            <th style="width:15%; min-width: 120px;">บาร์โค้ด</th>
+                            <th style="width:5%; min-width: 50px;">สลิป</th>
+                            <th style="width:10%; min-width: 80px;">หมายเหตุ</th>
+                            <th style="width:5%; min-width: 40px;">ลบ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dorm-history-table"></tbody>
+                </table>
+            </div>
+
+            <button onclick="switchScreen('main-scr'); loadData();" style="width:100%; padding:14px; border:none; background:#eee; color:#333; border-radius:6px; font-weight:bold; cursor:pointer; margin-top: 15px;">กลับหน้ารายรับ-รายจ่าย</button>
+        </div>
+
         <div id="profile-scr" class="screen">
             <div class="bbl-header"><h2>ข้อมูลส่วนตัว</h2><div class="bbl-line"></div></div>
             
@@ -437,7 +495,6 @@
                 <img id="profile-preview" src="" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bbl-blue); margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                 <br>
                 <button onclick="document.getElementById('upload-profile-input').click()" style="background:#fff; border:1px solid var(--bbl-blue); color:var(--bbl-blue); padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:bold; cursor:pointer;">📷 อัปโหลดรูปโปรไฟล์</button>
-                <input type="file" id="upload-profile-input" accept="image/*" hidden onchange="handleImageSelectForCrop(event)">
             </div>
 
             <label style="font-size:0.85rem; color:var(--bbl-blue); font-weight:bold; margin-bottom: 5px; display:block;">ชื่อเล่น (แสดงบนหน้าหลักและบัตร)</label>
@@ -453,15 +510,13 @@
             <button class="btn-primary" onclick="saveProfileData()">บันทึกข้อมูลส่วนตัว</button>
             <button onclick="switchScreen('main-scr')" style="width:100%; padding:14px; border:none; background:#ddd; color:#333; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom: 10px;">ยกเลิก / กลับหน้าหลัก</button>
 
-            <!-- เพิ่มส่วนการลบบัญชีตามคำขอ -->
             <div style="margin-top: 15px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-                <button onclick="deleteAccount()" style="background:transparent; border:1px solid #D32F2F; color:#D32F2F; padding:10px 15px; border-radius:6px; font-weight:bold; cursor:pointer; width: 100%;"> ลบบัญชีผู้ใช้งาน</button>
+                <button onclick="deleteAccount()" style="background:transparent; border:1px solid #D32F2F; color:#D32F2F; padding:10px 15px; border-radius:6px; font-weight:bold; cursor:pointer; width: 100%;">🗑️ ลบบัญชีผู้ใช้งาน</button>
             </div>
         </div>
 
     </div>
 
-    <!-- Modal สำหรับครอปรูป -->
     <div id="crop-modal" class="crop-modal-overlay">
         <div class="crop-modal-content">
             <h3 style="text-align:center; color:var(--bbl-blue); margin-bottom:15px;">ปรับตำแหน่งรูปภาพ</h3>
@@ -475,7 +530,11 @@
         </div>
     </div>
 
-    <!-- Modal สำหรับแสดง MASTERCARD -->
+    <div id="image-viewer-modal" class="crop-modal-overlay" onclick="closeImageViewer()">
+        <img id="viewer-img" src="" class="image-viewer-content" onclick="event.stopPropagation()">
+        <button onclick="closeImageViewer()" style="margin-top:20px; padding:10px 25px; border-radius:20px; border:none; background:#fff; color:#333; font-weight:bold; cursor:pointer;">ปิดรูปภาพ</button>
+    </div>
+
     <div id="mc-modal" class="crop-modal-overlay" onclick="closeMastercardPopup()">
         <div style="display:flex; flex-direction:column; align-items:center; gap:20px;" onclick="event.stopPropagation()">
             
@@ -518,8 +577,8 @@
             </div>
             
             <div style="color: white; font-size: 0.85rem; text-align: center;">
-                 <strong>แตะที่บัตร</strong> เพื่อพลิกดูด้านหลัง<br>
-                 <strong>กดค้างที่ ***</strong> เพื่อดูรหัส CVV
+                👆 <strong>แตะที่บัตร</strong> เพื่อพลิกดูด้านหลัง<br>
+                👆 <strong>กดค้างที่ ***</strong> เพื่อดูรหัส CVV
             </div>
             <button onclick="closeMastercardPopup()" style="padding:10px 25px; border-radius:20px; border:none; background:var(--bbl-orange); color:white; font-weight:bold; cursor:pointer;">ปิดหน้าต่าง</button>
             
@@ -536,28 +595,50 @@
         let tempProfileB64 = ""; 
         let cropper = null;
         let mastercardCVV = "***";
+        let logoutTimer; // ตัวแปรสำหรับจับเวลา Logout หลังบ้าน
 
         const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23cccccc'/><text x='50%' y='50%' font-size='12' fill='white' text-anchor='middle' dominant-baseline='middle'>รูป</text></svg>";
-        
         const trashIconSVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
 
         const thaiMonthsFull = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-        function adjustNicknameSize() {
-            const container = document.getElementById('name-container');
-            const nickname = document.getElementById('nickname-show');
-            if(!container || !nickname) return;
-            
-            nickname.style.fontSize = '1.1rem'; 
-            let currentSize = 1.1;
-            
-            while (nickname.scrollWidth > container.clientWidth && currentSize > 0.85) {
-                currentSize -= 0.05;
-                nickname.style.fontSize = currentSize + 'rem';
+        // --- ระบบ Auto Logout ---
+        function resetLogoutTimer() {
+            clearTimeout(logoutTimer);
+            // 5 ชั่วโมง = 5 * 60 * 60 * 1000 มิลลิวินาที
+            logoutTimer = setTimeout(autoLogout, 5 * 60 * 60 * 1000); 
+        }
+
+        function autoLogout() {
+            if (currentUser) {
+                alert("เซสชันหมดอายุเนื่องจากไม่มีการใช้งานเป็นเวลา 5 ชั่วโมง กรุณาเข้าสู่ระบบใหม่");
+                location.reload();
             }
         }
 
+        // รีเซ็ต Timer ทุกครั้งที่มีการเคลื่อนไหว
+        window.addEventListener('mousemove', resetLogoutTimer);
+        window.addEventListener('keypress', resetLogoutTimer);
+        window.addEventListener('click', resetLogoutTimer);
+        window.addEventListener('scroll', resetLogoutTimer);
+        window.addEventListener('touchstart', resetLogoutTimer);
+
+        function adjustNicknameSize() {
+            const containers = document.querySelectorAll('[id^="name-container"]');
+            containers.forEach(container => {
+                const nickname = container.querySelector('.nickname-show');
+                if(!nickname) return;
+                
+                nickname.style.fontSize = '1.1rem'; 
+                let currentSize = 1.1;
+                
+                while (nickname.scrollWidth > container.clientWidth && currentSize > 0.85) {
+                    currentSize -= 0.05;
+                    nickname.style.fontSize = currentSize + 'rem';
+                }
+            });
+        }
         window.addEventListener('resize', adjustNicknameSize);
 
         function updateClock() {
@@ -567,55 +648,77 @@
             const y = now.getFullYear() + 543;
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('realtime-clock').innerText = `ข้อมูล ณ วันที่ ${d} ${m} ${y} เวลา ${hours} : ${minutes} น.`;
+            
+            document.getElementById('realtime-clock-main').innerText = `ข้อมูล ณ วันที่ ${d} ${m} ${y} เวลา ${hours} : ${minutes} น.`;
+            document.getElementById('realtime-clock-dorm').innerText = `ข้อมูล ณ วันที่ ${d} ${m} ${y} เวลา ${hours} : ${minutes} น.`;
         }
         setInterval(updateClock, 1000);
         updateClock();
 
         function setupDateFilters() {
-            const dSelect = document.getElementById('filter-day');
+            const dSelectMain = document.getElementById('filter-day');
+            const dSelectDorm = document.getElementById('dorm-filter-day');
             let dHtml = '';
             for(let i = 1; i <= 31; i++) {
                 let val = i.toString().padStart(2, '0');
                 dHtml += `<option value="${val}">${val}</option>`;
             }
-            dSelect.innerHTML = dHtml;
+            dSelectMain.innerHTML = dHtml;
+            dSelectDorm.innerHTML = dHtml;
 
-            const ySelect = document.getElementById('filter-year');
+            const ySelectMain = document.getElementById('filter-year');
+            const ySelectDorm = document.getElementById('dorm-filter-year');
             const d = new Date();
             const curYear = d.getFullYear();
             let yHtml = '';
             for(let i = curYear + 2; i >= curYear - 20; i--) yHtml += `<option value="${i}">${i + 543}</option>`;
-            ySelect.innerHTML = yHtml;
+            ySelectMain.innerHTML = yHtml;
+            ySelectDorm.innerHTML = yHtml;
             
-            ySelect.value = curYear.toString();
-            document.getElementById('filter-month').value = (d.getMonth() + 1).toString().padStart(2, '0');
-            dSelect.value = d.getDate().toString().padStart(2, '0');
+            ySelectMain.value = curYear.toString();
+            ySelectDorm.value = curYear.toString();
+            
+            const curMonth = (d.getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('filter-month').value = curMonth;
+            document.getElementById('dorm-filter-month').value = curMonth;
+            
+            const curDay = d.getDate().toString().padStart(2, '0');
+            dSelectMain.value = curDay;
+            dSelectDorm.value = curDay;
 
             updateFilterUI();
+            updateDormFilterUI();
         }
 
         function updateFilterUI() {
             const mode = document.getElementById('filter-mode').value;
-            const dSelect = document.getElementById('filter-day');
-            const mSelect = document.getElementById('filter-month');
-            
-            if (mode === 'daily') {
-                dSelect.style.display = 'inline-block';
-                mSelect.style.display = 'inline-block';
-            } else if (mode === 'monthly') {
-                dSelect.style.display = 'none';
-                mSelect.style.display = 'inline-block';
-            } else if (mode === 'yearly') {
-                dSelect.style.display = 'none';
-                mSelect.style.display = 'none';
-            }
+            document.getElementById('filter-day').style.display = mode === 'daily' ? 'inline-block' : 'none';
+            document.getElementById('filter-month').style.display = mode !== 'yearly' ? 'inline-block' : 'none';
         }
+
+        function updateDormFilterUI() {
+            const mode = document.getElementById('dorm-filter-mode').value;
+            document.getElementById('dorm-filter-day').style.display = mode === 'daily' ? 'inline-block' : 'none';
+            document.getElementById('dorm-filter-month').style.display = mode !== 'yearly' ? 'inline-block' : 'none';
+        }
+        
         setupDateFilters();
 
         function switchScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            setTimeout(adjustNicknameSize, 50);
+            resetLogoutTimer(); // รีเซ็ตเวลาเมื่อเปลี่ยนหน้า
+        }
+
+        function viewImage(src) {
+            if(!src) return;
+            document.getElementById('viewer-img').src = src;
+            document.getElementById('image-viewer-modal').style.display = 'flex';
+        }
+        function closeImageViewer() {
+            document.getElementById('image-viewer-modal').style.display = 'none';
+            document.getElementById('viewer-img').src = '';
         }
 
         function handleImageSelectForCrop(event) {
@@ -625,21 +728,11 @@
                 reader.onload = function(e) {
                     document.getElementById('image-to-crop').src = e.target.result;
                     document.getElementById('crop-modal').style.display = 'flex';
-                    
-                    if (cropper) { cropper.destroy(); }
-                    
+                    if (cropper) cropper.destroy();
                     cropper = new Cropper(document.getElementById('image-to-crop'), {
-                        aspectRatio: 1, 
-                        viewMode: 1,
-                        dragMode: 'move',
-                        autoCropArea: 1,
-                        restore: false,
-                        guides: false,
-                        center: false,
-                        highlight: false,
-                        cropBoxMovable: true,
-                        cropBoxResizable: true,
-                        toggleDragModeOnDblclick: false,
+                        aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 1,
+                        restore: false, guides: false, center: false, highlight: false,
+                        cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
                     });
                 };
                 reader.readAsDataURL(file);
@@ -651,9 +744,7 @@
             if (!cropper) return;
             const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
             tempProfileB64 = canvas.toDataURL('image/jpeg', 0.8);
-            
             document.getElementById('profile-preview').src = tempProfileB64;
-            
             document.getElementById('crop-modal').style.display = 'none';
             cropper.destroy();
             cropper = null;
@@ -662,6 +753,71 @@
         function cancelCrop() {
             document.getElementById('crop-modal').style.display = 'none';
             if(cropper) { cropper.destroy(); cropper = null; }
+        }
+
+        let contractTimer;
+        let isLongPressContract = false;
+        const contractBtn = document.getElementById('contract-btn');
+
+        contractBtn.addEventListener('mousedown', startContractPress);
+        contractBtn.addEventListener('touchstart', startContractPress);
+        contractBtn.addEventListener('mouseup', endContractPress);
+        contractBtn.addEventListener('touchend', endContractPress);
+        contractBtn.addEventListener('mouseleave', () => clearTimeout(contractTimer));
+
+        function startContractPress(e) {
+            isLongPressContract = false;
+            contractTimer = setTimeout(() => {
+                isLongPressContract = true;
+                document.getElementById('upload-contract-input').click();
+            }, 600); 
+        }
+
+        function endContractPress(e) {
+            e.preventDefault();
+            clearTimeout(contractTimer);
+            if (!isLongPressContract) {
+                let img = localStorage.getItem(`contract_${currentUser}`);
+                if (img) {
+                    viewImage(img);
+                } else {
+                    document.getElementById('upload-contract-input').click();
+                }
+            }
+        }
+
+        function handleContractUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                compressImage(file, 800, 800, 0.7, (base64) => {
+                    localStorage.setItem(`contract_${currentUser}`, base64);
+                    alert("บันทึกหนังสือสัญญาเรียบร้อยแล้ว");
+                });
+            }
+            event.target.value = '';
+        }
+
+        function compressImage(file, maxWidth, maxHeight, quality, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+                    } else {
+                        if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', quality));
+                };
+            };
         }
 
         function generateMastercard(username) {
@@ -677,14 +833,10 @@
                 if (now > new Date(data.expiryFull)) {
                     let expiryDate = new Date();
                     expiryDate.setMonth(expiryDate.getMonth() + 1);
-                    
                     let expM = (expiryDate.getMonth() + 1).toString().padStart(2, '0');
                     let expY = expiryDate.getFullYear().toString().slice(-2);
-                    let displayExpiry = `${expM}/${expY}`;
-
                     data.expiryFull = expiryDate.toISOString();
-                    data.displayExpiry = displayExpiry;
-                    
+                    data.displayExpiry = `${expM}/${expY}`;
                     localStorage.setItem(`mastercard_${username}`, JSON.stringify(data));
                 }
             } else {
@@ -693,22 +845,14 @@
                 let block3 = Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
                 let block4 = Math.floor(1000 + Math.random() * 9000).toString().padStart(4, '0');
                 cardNum = `${block1} ${block2} ${block3} ${block4}`;
-                
                 cvv = Math.floor(100 + Math.random() * 900).toString().padStart(3, '0');
                 
                 let expiryDate = new Date();
                 expiryDate.setMonth(expiryDate.getMonth() + 1);
-                
                 let expM = (expiryDate.getMonth() + 1).toString().padStart(2, '0');
                 let expY = expiryDate.getFullYear().toString().slice(-2);
-                let displayExpiry = `${expM}/${expY}`;
 
-                data = {
-                    number: cardNum,
-                    cvv: cvv,
-                    expiryFull: expiryDate.toISOString(),
-                    displayExpiry: displayExpiry
-                };
+                data = { number: cardNum, cvv: cvv, expiryFull: expiryDate.toISOString(), displayExpiry: `${expM}/${expY}` };
                 localStorage.setItem(`mastercard_${username}`, JSON.stringify(data));
             }
             return data;
@@ -716,48 +860,28 @@
 
         function openMastercardPopup() {
             if(!currentUser) return;
-            
             let mcData = generateMastercard(currentUser);
             mastercardCVV = mcData.cvv;
-            
             document.getElementById('mc-number').innerText = mcData.number;
             document.getElementById('mc-expiry').innerText = mcData.displayExpiry;
             document.getElementById('mc-name').innerText = (currentNickname || currentUser).toUpperCase();
             document.getElementById('mc-cvv-text').innerText = "***";
-            
             document.getElementById('mc-card-element').classList.remove('flipped');
             document.getElementById('mc-modal').style.display = 'flex';
         }
 
-        function closeMastercardPopup() {
-            document.getElementById('mc-modal').style.display = 'none';
-        }
-
-        function flipCard() {
-            document.getElementById('mc-card-element').classList.toggle('flipped');
-        }
+        function closeMastercardPopup() { document.getElementById('mc-modal').style.display = 'none'; }
+        function flipCard() { document.getElementById('mc-card-element').classList.toggle('flipped'); }
 
         const cvvBtn = document.getElementById('mc-cvv-btn');
         const cvvText = document.getElementById('mc-cvv-text');
 
-        function showCVV(e) {
-            e.preventDefault(); 
-            e.stopPropagation();
-            cvvText.innerText = mastercardCVV;
-        }
+        function showCVV(e) { e.preventDefault(); e.stopPropagation(); cvvText.innerText = mastercardCVV; }
+        function hideCVV(e) { e.preventDefault(); e.stopPropagation(); cvvText.innerText = "***"; }
 
-        function hideCVV(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            cvvText.innerText = "***";
-        }
-
-        cvvBtn.addEventListener('mousedown', showCVV);
-        cvvBtn.addEventListener('mouseup', hideCVV);
-        cvvBtn.addEventListener('mouseleave', hideCVV);
-        cvvBtn.addEventListener('touchstart', showCVV);
-        cvvBtn.addEventListener('touchend', hideCVV);
-        cvvBtn.addEventListener('click', (e) => e.stopPropagation());
+        cvvBtn.addEventListener('mousedown', showCVV); cvvBtn.addEventListener('mouseup', hideCVV);
+        cvvBtn.addEventListener('mouseleave', hideCVV); cvvBtn.addEventListener('touchstart', showCVV);
+        cvvBtn.addEventListener('touchend', hideCVV); cvvBtn.addEventListener('click', (e) => e.stopPropagation());
 
         async function doRegister() {
             const u = document.getElementById('reg-name').value;
@@ -785,6 +909,15 @@
             document.querySelector('#register-scr .btn-primary').innerText = "ยืนยันการสมัคร";
         }
 
+        function updateAllProfileDisplays() {
+            document.querySelectorAll('.user-show').forEach(el => el.innerText = currentUser);
+            document.querySelectorAll('.nickname-show').forEach(el => el.innerText = currentNickname || "ชื่อเล่น");
+            document.querySelectorAll('.profile-img').forEach(el => el.src = tempProfileB64 || defaultAvatar);
+            document.getElementById('edit-nickname').value = currentNickname;
+            document.getElementById('profile-preview').src = tempProfileB64 || defaultAvatar;
+            adjustNicknameSize();
+        }
+
         async function doLogin() {
             const u = document.getElementById('login-name').value;
             const p = document.getElementById('login-pin').value;
@@ -794,18 +927,24 @@
                 currentNickname = data[0].nickname || "";
                 tempProfileB64 = data[0].profile_img || "";
 
-                document.getElementById('user-show').innerText = u;
-                document.getElementById('nickname-show').innerText = currentNickname || "ชื่อเล่น (ตั้งค่าได้ที่โปรไฟล์)";
-                
-                document.getElementById('profile-img-main').src = tempProfileB64 || defaultAvatar;
-                
-                document.getElementById('edit-nickname').value = currentNickname;
-                document.getElementById('profile-preview').src = tempProfileB64 || defaultAvatar;
+                // เช็คสถานะการเปิดระบบหอพัก
+                await checkDormitoryStatus(u);
 
+                updateAllProfileDisplays();
                 switchScreen('main-scr'); 
-                setTimeout(adjustNicknameSize, 50); 
                 loadData();
+                resetLogoutTimer(); // เริ่มจับเวลา Logout
             } else alert("ชื่อผู้ใช้งาน หรือ รหัส PIN ไม่ถูกต้อง");
+        }
+
+        // ฟังก์ชันตรวจสอบสถานะหอพักจาก Supabase 
+        async function checkDormitoryStatus(username) {
+            const { data } = await sb.from('users').select('dormitory_active').eq('username', username).single();
+            if (data && data.dormitory_active === true) {
+                document.getElementById('dorm-access-btn').style.display = 'block';
+            } else {
+                document.getElementById('dorm-access-btn').style.display = 'none';
+            }
         }
 
         async function saveProfileData() {
@@ -814,10 +953,7 @@
             const newP = document.getElementById('edit-new-pin').value;
             const confP = document.getElementById('edit-new-pin-confirm').value;
 
-            let updatePayload = { 
-                nickname: newNick, 
-                profile_img: tempProfileB64 
-            };
+            let updatePayload = { nickname: newNick, profile_img: tempProfileB64 };
 
             if (oldP || newP || confP) {
                 const { data } = await sb.from('users').select('pin').eq('username', currentUser).eq('pin', oldP);
@@ -830,29 +966,25 @@
             const { error } = await sb.from('users').update(updatePayload).eq('username', currentUser);
             
             if (error) {
-                alert("บันทึกข้อมูลล้มเหลว!\n\nกรุณาเพิ่ม Column: 'nickname' (ชนิด: text) และ 'profile_img' (ชนิด: text) ในตาราง 'users' บน Supabase ก่อนใช้งาน\n\nข้อผิดพลาดจากระบบ: " + error.message);
+                alert("บันทึกข้อมูลล้มเหลว!\n\nกรุณาตรวจสอบโครงสร้างตารางผู้ใช้งาน\n\nข้อผิดพลาด: " + error.message);
             } else {
                 alert("บันทึกข้อมูลส่วนตัวสำเร็จ!");
                 currentNickname = newNick;
-                document.getElementById('nickname-show').innerText = currentNickname || "ชื่อเล่น (ตั้งค่าได้ที่โปรไฟล์)";
-                document.getElementById('profile-img-main').src = tempProfileB64 || defaultAvatar;
+                updateAllProfileDisplays();
                 
                 document.getElementById('edit-old-pin').value = '';
                 document.getElementById('edit-new-pin').value = '';
                 document.getElementById('edit-new-pin-confirm').value = '';
                 
                 switchScreen('main-scr');
-                setTimeout(adjustNicknameSize, 50);
             }
         }
 
         async function deleteAccount() {
-            const pin = prompt("คำเตือน: การลบบัญชีจะทำให้ข้อมูลทั้งหมดหายไปอย่างถาวร\n\nกรุณากรอกรหัส PIN 6 หลักเพื่อยืนยัน:");
+            const pin = prompt("⚠️ คำเตือน: การลบบัญชีจะทำให้ข้อมูลทั้งหมดหายไปอย่างถาวร\n\nกรุณากรอกรหัส PIN 6 หลักเพื่อยืนยัน:");
             if (pin === null) return; 
             
-            if (pin.length !== 6) {
-                return alert("รหัส PIN ต้องมี 6 หลัก");
-            }
+            if (pin.length !== 6) return alert("รหัส PIN ต้องมี 6 หลัก");
 
             const { data } = await sb.from('users').select('pin').eq('username', currentUser).eq('pin', pin);
             if (data && data.length > 0) {
@@ -864,6 +996,8 @@
                     } else {
                         alert("ลบบัญชีของคุณเรียบร้อยแล้ว");
                         localStorage.removeItem(`mastercard_${currentUser}`); 
+                        localStorage.removeItem(`contract_${currentUser}`); 
+                        clearTimeout(logoutTimer);
                         location.reload(); 
                     }
                 }
@@ -875,11 +1009,8 @@
         async function deleteTransaction(id) {
             if(confirm("คุณต้องการลบรายการนี้ใช่หรือไม่?")) {
                 const { error } = await sb.from('transactions').delete().eq('id', id);
-                if(error) {
-                    alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
-                } else {
-                    loadData();
-                }
+                if(error) alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
+                else { loadData(); loadDormData(); }
             }
         }
 
@@ -896,126 +1027,135 @@
         async function processWithAI(e, txType) {
             const files = e.target.files;
             if(!files || files.length === 0) return;
+            if (files.length > 8) { alert("อัปโหลดสูงสุด 8 สลิปต่อครั้ง"); e.target.value = ''; return; }
 
-            if (files.length > 8) {
-                alert("จำนวนสลิปเกินกำหนด กรุณาอัปโหลดสูงสุด 8 สลิปต่อครั้ง");
-                e.target.value = '';
-                return;
-            }
-
-            const statusTxt = document.getElementById('status-msg');
+            const statusTxt = document.getElementById('status-msg-main');
             const typeName = txType === 'income' ? 'รายรับ' : 'รายจ่าย';
-            
-            let successCount = 0;
-            let failCount = 0;
+            let successCount = 0; let failCount = 0;
 
             try {
-                statusTxt.innerText = `กำลังเชื่อมต่อระบบ...`;
-                statusTxt.style.color = "var(--bbl-blue)";
-
-                const { data: settingData, error: setErr } = await sb
-                    .from('settings')
-                    .select('key_value')
-                    .eq('key_name', 'gemini_api_key')
-                    .single();
-
-                if (setErr || !settingData || !settingData.key_value) {
-                    throw new Error("ระบบหลังบ้านยังไม่ได้ตั้งค่า API Key");
-                }
+                statusTxt.innerText = `กำลังเชื่อมต่อระบบ...`; statusTxt.style.color = "var(--bbl-blue)";
+                const { data: settingData, error: setErr } = await sb.from('settings').select('key_value').eq('key_name', 'gemini_api_key').single();
+                if (setErr || !settingData || !settingData.key_value) throw new Error("ระบบหลังบ้านยังไม่ได้ตั้งค่า API Key");
 
                 const apiKey = settingData.key_value;
 
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    statusTxt.innerText = `กำลังประมวลผลสลิปที่ ${i + 1} จากทั้งหมด ${files.length} ใบ...`;
-                    statusTxt.style.color = "var(--bbl-blue)";
-
+                    statusTxt.innerText = `กำลังประมวลผลสลิปที่ ${i + 1} จาก ${files.length} ใบ...`;
+                    
                     try {
                         const imagePart = await fileToGenerativePart(file);
-                        
-                        const prompt = `Analyze this Thai bank slip with 100% accuracy. 
-                                        Extract:
-                                        1. exact transfer amount (number only, no comma)
-                                        2. date in YYYY-MM-DD format (convert Thai Buddhist year e.g. 2569 to Gregorian 2026)
-                                        3. time in HH:MM format
-                                        Return ONLY a valid JSON object strictly matching this format without any markdown tags:
-                                        {"amount": 0.00, "date": "YYYY-MM-DD", "time": "HH:MM"}`;
-
-                        const requestBody = {
-                            contents: [{ parts: [{ text: prompt }, imagePart] }]
-                        };
+                        const prompt = `Analyze this Thai bank slip with 100% accuracy. Extract: 1. exact transfer amount (number only) 2. date in YYYY-MM-DD format (convert Buddhist year to Gregorian) 3. time in HH:MM format. Return ONLY valid JSON: {"amount": 0.00, "date": "YYYY-MM-DD", "time": "HH:MM"}`;
 
                         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(requestBody)
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, imagePart] }] })
                         });
-
                         const data = await response.json();
                         
-                        if(!response.ok) {
-                            console.error(`AI Error for slip ${i + 1}:`, data.error?.message);
-                            failCount++;
-                            continue; 
-                        }
-
                         let rawText = data.candidates[0].content.parts[0].text;
                         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-                        
                         const result = JSON.parse(rawText);
 
-                        if (!result.amount || result.amount <= 0 || !result.date) {
-                            failCount++;
-                            continue;
-                        }
+                        if (!result.amount || result.amount <= 0 || !result.date) { failCount++; continue; }
 
                         const slipNote = `${typeName} เวลา ${result.time || '00:00'} น.`;
-
-                        const { data: duplicateCheck } = await sb
-                            .from('transactions')
-                            .select('*')
-                            .eq('username', currentUser)
-                            .eq('amount', result.amount)
-                            .eq('date', result.date)
-                            .ilike('slip_text', `%เวลา ${result.time}%`);
-
-                        if (duplicateCheck && duplicateCheck.length > 0) {
-                            failCount++;
-                            continue; 
-                        }
+                        const { data: dupCheck } = await sb.from('transactions').select('*').eq('username', currentUser).eq('amount', result.amount).eq('date', result.date).ilike('slip_text', `%เวลา ${result.time}%`);
+                        if (dupCheck && dupCheck.length > 0) { failCount++; continue; }
                         
                         const { error: dbError } = await sb.from('transactions').insert([{ 
-                            username: currentUser, 
-                            amount: result.amount, 
-                            type: txType, 
-                            date: result.date, 
-                            slip_text: slipNote,
-                            title: 'ทำรายการ'
+                            username: currentUser, amount: result.amount, type: txType, date: result.date, slip_text: slipNote, title: 'ทำรายการ'
                         }]);
 
-                        if (dbError) {
-                            console.error(`DB Error for slip ${i + 1}:`, dbError.message);
-                            failCount++;
-                        } else {
-                            successCount++;
-                        }
+                        if (dbError) failCount++; else successCount++;
 
-                    } catch (fileErr) {
-                        console.error(`Error processing slip ${i + 1}:`, fileErr);
-                        failCount++;
-                    }
+                    } catch (fileErr) { failCount++; }
                 } 
 
                 statusTxt.innerText = `สำเร็จ ${successCount} ใบ | ไม่ผ่านหรือซ้ำ ${failCount} ใบ`;
                 statusTxt.style.color = failCount > 0 ? (successCount > 0 ? "#F39C12" : "#D32F2F") : "#2E7D32";
-                
                 setTimeout(() => statusTxt.innerText = "", 5000);
                 loadData(); 
 
             } catch (err) {
-                statusTxt.innerText = "เกิดข้อผิดพลาด: " + err.message;
+                statusTxt.innerText = "เกิดข้อผิดพลาด: " + err.message; statusTxt.style.color = "red";
+            }
+            e.target.value = ''; 
+        }
+
+        async function processDormSlip(e) {
+            const files = e.target.files;
+            if(!files || files.length === 0) return;
+            if (files.length > 8) { alert("อัปโหลดสูงสุด 8 สลิปต่อครั้ง"); e.target.value = ''; return; }
+
+            const statusTxt = document.getElementById('status-msg-dorm');
+            let successCount = 0; let failCount = 0;
+
+            try {
+                statusTxt.innerText = `กำลังเชื่อมต่อระบบ...`; statusTxt.style.color = "var(--bbl-blue)";
+                const { data: settingData, error: setErr } = await sb.from('settings').select('key_value').eq('key_name', 'gemini_api_key').single();
+                if (setErr || !settingData || !settingData.key_value) throw new Error("ระบบหลังบ้านยังไม่ได้ตั้งค่า API Key");
+
+                const apiKey = settingData.key_value;
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    statusTxt.innerText = `กำลังประมวลผลสลิปหอพัก ${i + 1} จาก ${files.length} ใบ...`;
+                    
+                    compressImage(file, 600, 600, 0.7, async (compressedBase64) => {
+                        try {
+                            const imagePart = await fileToGenerativePart(file);
+                            const prompt = `Analyze this Thai bank slip with 100% accuracy. Extract: 1. exact transfer amount (number only) 2. date in YYYY-MM-DD 3. time in HH:MM format 4. Transaction ID or Reference number (if found, else return 'NO_REF'). Return ONLY valid JSON: {"amount": 0.00, "date": "YYYY-MM-DD", "time": "HH:MM", "ref": "string"}`;
+
+                            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, imagePart] }] })
+                            });
+                            const data = await response.json();
+                            
+                            let rawText = data.candidates[0].content.parts[0].text;
+                            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                            const result = JSON.parse(rawText);
+
+                            if (!result.amount || result.amount <= 0 || !result.date) { failCount++; return; }
+
+                            const slipNote = `เวลา ${result.time || '00:00'} น.`;
+                            
+                            let barcodeStr = result.ref;
+                            if(!barcodeStr || barcodeStr === 'NO_REF') {
+                                barcodeStr = "DRM" + result.date.replace(/-/g, '') + Math.floor(1000+Math.random()*9000);
+                            }
+
+                            const { error: dbError } = await sb.from('transactions').insert([{ 
+                                username: currentUser, 
+                                amount: result.amount, 
+                                type: 'dormitory', 
+                                date: result.date, 
+                                slip_text: slipNote, 
+                                title: 'รอบเดือน...',
+                                room_rate: '3200', 
+                                water_bill: '0', 
+                                electric_bill: '0',
+                                barcode: barcodeStr,
+                                slip_image: compressedBase64
+                            }]);
+
+                            if (dbError) failCount++; else successCount++;
+
+                        } catch (fileErr) { failCount++; }
+                        
+                        if(i === files.length - 1) {
+                            statusTxt.innerText = `สำเร็จ ${successCount} ใบ | ไม่ผ่าน ${failCount} ใบ`;
+                            statusTxt.style.color = failCount > 0 ? (successCount > 0 ? "#F39C12" : "#D32F2F") : "#2E7D32";
+                            setTimeout(() => statusTxt.innerText = "", 5000);
+                            loadDormData(); 
+                        }
+                    });
+                } 
+            } catch (err) {
+                statusTxt.innerText = "เกิดข้อผิดพลาดในการประมวลผล"; 
                 statusTxt.style.color = "red";
-                console.error(err);
             }
             e.target.value = ''; 
         }
@@ -1031,40 +1171,34 @@
             if (!amountStr || isNaN(amountStr)) return { baht: '', satang: '' };
             const num = parseFloat(amountStr);
             if (num === 0) return { baht: '', satang: '' };
-            
             const parts = num.toFixed(2).split('.');
             const baht = parseInt(parts[0], 10).toLocaleString('th-TH');
             const satang = parts[1] === '00' ? '-' : parts[1];
             return { baht, satang };
         }
-        
-        const editIconSVG = `<svg class="edit-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
-        async function editRecord(id, field, currentValue) {
+        async function editRecord(id, field, currentValue, isDorm = false) {
             const newValue = prompt(`แก้ไขข้อมูล:`, currentValue);
             if (newValue !== null && newValue.trim() !== "") {
                 const { error } = await sb.from('transactions').update({ [field]: newValue }).eq('id', id);
                 if (error) {
-                    alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: กรุณาตรวจสอบว่ามีคอลัมน์ชื่อ '" + field + "' ในฐานข้อมูลหรือไม่");
+                    alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
                 } else {
-                    loadData();
+                    isDorm ? loadDormData() : loadData();
                 }
             }
         }
 
         async function loadData() {
-            const { data } = await sb.from('transactions').select('*').eq('username', currentUser).order('date', {ascending: true}).order('id', {ascending: true});
+            const { data } = await sb.from('transactions').select('*').eq('username', currentUser).in('type', ['income', 'expense']).order('date', {ascending: true}).order('id', {ascending: true});
             
             const mode = document.getElementById('filter-mode').value;
             const selDay = document.getElementById('filter-day').value;
             const selMonth = document.getElementById('filter-month').value;
             const selYear = document.getElementById('filter-year').value;
 
-            let runningBalance = 0;
-            let filteredData = [];
-            
-            let sumIncome = 0;
-            let sumExpense = 0;
+            let runningBalance = 0; let filteredData = [];
+            let sumIncome = 0; let sumExpense = 0;
 
             if(data) {
                 data.forEach(item => {
@@ -1073,20 +1207,14 @@
                     item.balance = runningBalance;
 
                     const [y, m, d] = item.date.split('-');
-                    
                     let isMatch = false;
-                    if (mode === 'daily') {
-                        isMatch = (y === selYear && m === selMonth && d === selDay);
-                    } else if (mode === 'monthly') {
-                        isMatch = (y === selYear && m === selMonth);
-                    } else if (mode === 'yearly') {
-                        isMatch = (y === selYear);
-                    }
+                    if (mode === 'daily') isMatch = (y === selYear && m === selMonth && d === selDay);
+                    else if (mode === 'monthly') isMatch = (y === selYear && m === selMonth);
+                    else if (mode === 'yearly') isMatch = (y === selYear);
 
                     if(isMatch) {
                         filteredData.push(item);
-                        if(item.type === 'income') sumIncome += amt;
-                        else sumExpense += amt;
+                        if(item.type === 'income') sumIncome += amt; else sumExpense += amt;
                     }
                 });
             }
@@ -1119,7 +1247,7 @@
                 return `<tr>
                     <td>${thDate}</td>
                     <td style="text-align:left; padding-left:10px;">
-                        <span onclick="editRecord(${i.id}, 'title', '${titleText}')" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                        <span onclick="editRecord(${i.id}, 'title', '${titleText}', false)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
                             ${titleText} ${editIconSVG}
                         </span>
                     </td>
@@ -1130,7 +1258,7 @@
                     <td class="col-baht text-balance">${balSplit.baht}</td>
                     <td class="col-satang text-balance">${balSplit.satang}</td>
                     <td style="text-align:left; padding-left:10px;">
-                        <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}')" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                        <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}', false)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
                             ${noteText} ${editIconSVG}
                         </span>
                     </td>
@@ -1139,6 +1267,94 @@
                     </td>
                 </tr>`;
             }).join('');
+        }
+
+        async function loadDormData() {
+            const { data } = await sb.from('transactions').select('*').eq('username', currentUser).eq('type', 'dormitory').order('date', {ascending: false}).order('id', {ascending: false});
+            
+            const mode = document.getElementById('dorm-filter-mode').value;
+            const selDay = document.getElementById('dorm-filter-day').value;
+            const selMonth = document.getElementById('dorm-filter-month').value;
+            const selYear = document.getElementById('dorm-filter-year').value;
+
+            let filteredData = [];
+
+            if(data) {
+                data.forEach(item => {
+                    const [y, m, d] = item.date.split('-');
+                    let isMatch = false;
+                    if (mode === 'daily') isMatch = (y === selYear && m === selMonth && d === selDay);
+                    else if (mode === 'monthly') isMatch = (y === selYear && m === selMonth);
+                    else if (mode === 'yearly') isMatch = (y === selYear);
+
+                    if(isMatch) filteredData.push(item);
+                });
+            }
+
+            if(filteredData.length === 0) {
+                document.getElementById('dorm-history-table').innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
+                return;
+            }
+
+            document.getElementById('dorm-history-table').innerHTML = filteredData.map(i => {
+                const dParts = i.date.split('-');
+                const monthIndex = parseInt(dParts[1]) - 1;
+                const thDate = `${parseInt(dParts[2])} ${thaiMonthsShort[monthIndex]} ${(parseInt(dParts[0])+543)}`;
+                
+                const titleText = i.title || 'รอบเดือน...';
+                const noteText = i.slip_text || '-';
+                
+                const rRate = i.room_rate || '3200';
+                const wBill = i.water_bill || '0';
+                const eBill = i.electric_bill || '0';
+                const totalAmt = formatDisplayAmount(i.amount);
+
+                let slipHtml = i.slip_image ? `<span onclick="viewImage('${i.slip_image}')" style="cursor:pointer; color:var(--bbl-blue); text-decoration:underline; font-weight:bold;">ดูสลิป</span>` : '-';
+
+                return `<tr>
+                    <td>${thDate}</td>
+                    <td style="text-align:left; padding-left:5px;">
+                        <span onclick="editRecord(${i.id}, 'title', '${titleText}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                            ${titleText} ${editIconSVG}
+                        </span>
+                    </td>
+                    <td>
+                        <span onclick="editRecord(${i.id}, 'room_rate', '${rRate}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                            ${rRate} ${editIconSVG}
+                        </span>
+                    </td>
+                    <td>
+                        <span onclick="editRecord(${i.id}, 'water_bill', '${wBill}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                            ${wBill} ${editIconSVG}
+                        </span>
+                    </td>
+                    <td>
+                        <span onclick="editRecord(${i.id}, 'electric_bill', '${eBill}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                            ${eBill} ${editIconSVG}
+                        </span>
+                    </td>
+                    <td style="font-weight:bold; color:var(--bbl-orange);">${totalAmt}</td>
+                    <td style="padding: 5px;">
+                        <svg class="barcode-svg" id="barcode-${i.id}" style="width:100%; height:40px;"></svg>
+                    </td>
+                    <td>${slipHtml}</td>
+                    <td style="text-align:left; padding-left:5px;">
+                        <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                            ${noteText} ${editIconSVG}
+                        </span>
+                    </td>
+                    <td style="text-align:center;">
+                        <span onclick="deleteTransaction(${i.id})" style="cursor:pointer;" title="ลบรายการ">${trashIconSVG}</span>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            filteredData.forEach(i => {
+                let bVal = i.barcode || i.id.toString();
+                try {
+                    JsBarcode("#barcode-" + i.id, bVal, { width: 1.5, height: 30, displayValue: false, margin: 0 });
+                } catch(e) {}
+            });
         }
     </script>
 </body>
