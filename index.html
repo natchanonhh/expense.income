@@ -585,6 +585,7 @@
         </div>
     </div>
 
+    <!-- Script ควบคุมระบบทั้งหมด -->
     <script>
         const SB_URL = 'https://nnxraimetlwvsekburkm.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ueHJhaW1ldGx3dnNla2J1cmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5ODEyMjgsImV4cCI6MjEwMDU1NzIyOH0.6fGLFjKsKO94EVf3B_es1P-ImXnkcreC3zRKxiaDEiM';
@@ -593,20 +594,19 @@
         let currentUser = "";
         let currentNickname = "";
         let tempProfileB64 = ""; 
+        let tempContractB64 = ""; // ตัวแปรเก็บรูปสัญญา
         let cropper = null;
         let mastercardCVV = "***";
-        let logoutTimer; // ตัวแปรสำหรับจับเวลา Logout หลังบ้าน
+        let logoutTimer; 
 
         const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23cccccc'/><text x='50%' y='50%' font-size='12' fill='white' text-anchor='middle' dominant-baseline='middle'>รูป</text></svg>";
         const trashIconSVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D32F2F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+        const editIconSVG = `<svg class="edit-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
-        const thaiMonthsFull = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
         const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-        // --- ระบบ Auto Logout ---
         function resetLogoutTimer() {
             clearTimeout(logoutTimer);
-            // 5 ชั่วโมง = 5 * 60 * 60 * 1000 มิลลิวินาที
             logoutTimer = setTimeout(autoLogout, 5 * 60 * 60 * 1000); 
         }
 
@@ -617,7 +617,6 @@
             }
         }
 
-        // รีเซ็ต Timer ทุกครั้งที่มีการเคลื่อนไหว
         window.addEventListener('mousemove', resetLogoutTimer);
         window.addEventListener('keypress', resetLogoutTimer);
         window.addEventListener('click', resetLogoutTimer);
@@ -626,17 +625,21 @@
 
         function adjustNicknameSize() {
             const containers = document.querySelectorAll('[id^="name-container"]');
-            containers.forEach(container => {
+            
+            Array.from(containers).forEach(container => {
                 const nickname = container.querySelector('.nickname-show');
-                if(!nickname) return;
+                if(!nickname || container.clientWidth === 0) return;
                 
                 nickname.style.fontSize = '1.1rem'; 
-                let currentSize = 1.1;
                 
-                while (nickname.scrollWidth > container.clientWidth && currentSize > 0.85) {
+                const shrinkText = (currentSize, attempts) => {
+                    if (attempts >= 5 || nickname.scrollWidth <= container.clientWidth || currentSize <= 0.85) return;
                     currentSize -= 0.05;
                     nickname.style.fontSize = currentSize + 'rem';
-                }
+                    shrinkText(currentSize, attempts + 1);
+                };
+                
+                shrinkText(1.1, 0);
             });
         }
         window.addEventListener('resize', adjustNicknameSize);
@@ -658,11 +661,12 @@
         function setupDateFilters() {
             const dSelectMain = document.getElementById('filter-day');
             const dSelectDorm = document.getElementById('dorm-filter-day');
+            
             let dHtml = '';
-            for(let i = 1; i <= 31; i++) {
-                let val = i.toString().padStart(2, '0');
+            Array.from({length: 31}).forEach((_, i) => {
+                let val = (i + 1).toString().padStart(2, '0');
                 dHtml += `<option value="${val}">${val}</option>`;
-            }
+            });
             dSelectMain.innerHTML = dHtml;
             dSelectDorm.innerHTML = dHtml;
 
@@ -670,8 +674,12 @@
             const ySelectDorm = document.getElementById('dorm-filter-year');
             const d = new Date();
             const curYear = d.getFullYear();
+            
             let yHtml = '';
-            for(let i = curYear + 2; i >= curYear - 20; i--) yHtml += `<option value="${i}">${i + 543}</option>`;
+            Array.from({length: 23}).forEach((_, i) => {
+                let val = curYear + 2 - i;
+                yHtml += `<option value="${val}">${val + 543}</option>`;
+            });
             ySelectMain.innerHTML = yHtml;
             ySelectDorm.innerHTML = yHtml;
             
@@ -708,7 +716,7 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             setTimeout(adjustNicknameSize, 50);
-            resetLogoutTimer(); // รีเซ็ตเวลาเมื่อเปลี่ยนหน้า
+            resetLogoutTimer(); 
         }
 
         function viewImage(src) {
@@ -777,24 +785,12 @@
             e.preventDefault();
             clearTimeout(contractTimer);
             if (!isLongPressContract) {
-                let img = localStorage.getItem(`contract_${currentUser}`);
-                if (img) {
-                    viewImage(img);
+                if (tempContractB64) {
+                    viewImage(tempContractB64);
                 } else {
                     document.getElementById('upload-contract-input').click();
                 }
             }
-        }
-
-        function handleContractUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                compressImage(file, 800, 800, 0.7, (base64) => {
-                    localStorage.setItem(`contract_${currentUser}`, base64);
-                    alert("บันทึกหนังสือสัญญาเรียบร้อยแล้ว");
-                });
-            }
-            event.target.value = '';
         }
 
         function compressImage(file, maxWidth, maxHeight, quality, callback) {
@@ -818,6 +814,23 @@
                     callback(canvas.toDataURL('image/jpeg', quality));
                 };
             };
+        }
+
+        // อัปเดตให้บันทึกรูปลงตาราง users ใน Supabase จะได้ดึงข้ามเครื่องได้
+        async function handleContractUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                compressImage(file, 800, 800, 0.7, async (base64) => {
+                    const { error } = await sb.from('users').update({ contract_img: base64 }).eq('username', currentUser);
+                    if (error) {
+                        alert("บันทึกไม่สำเร็จ (ตรวจสอบว่ามีคอลัมน์ contract_img ในตาราง users): " + error.message);
+                    } else {
+                        tempContractB64 = base64;
+                        alert("บันทึกหนังสือสัญญาลงระบบเรียบร้อยแล้ว สามารถดูข้ามอุปกรณ์ได้");
+                    }
+                });
+            }
+            event.target.value = '';
         }
 
         function generateMastercard(username) {
@@ -926,18 +939,17 @@
                 currentUser = u; 
                 currentNickname = data[0].nickname || "";
                 tempProfileB64 = data[0].profile_img || "";
+                tempContractB64 = data[0].contract_img || "";
 
-                // เช็คสถานะการเปิดระบบหอพัก
                 await checkDormitoryStatus(u);
 
                 updateAllProfileDisplays();
                 switchScreen('main-scr'); 
                 loadData();
-                resetLogoutTimer(); // เริ่มจับเวลา Logout
+                resetLogoutTimer(); 
             } else alert("ชื่อผู้ใช้งาน หรือ รหัส PIN ไม่ถูกต้อง");
         }
 
-        // ฟังก์ชันตรวจสอบสถานะหอพักจาก Supabase 
         async function checkDormitoryStatus(username) {
             const { data } = await sb.from('users').select('dormitory_active').eq('username', username).single();
             if (data && data.dormitory_active === true) {
@@ -1062,13 +1074,20 @@
 
                         const slipNote = `${typeName} เวลา ${result.time || '00:00'} น.`;
                         const { data: dupCheck } = await sb.from('transactions').select('*').eq('username', currentUser).eq('amount', result.amount).eq('date', result.date).ilike('slip_text', `%เวลา ${result.time}%`);
-                        if (dupCheck && dupCheck.length > 0) { failCount++; continue; }
                         
-                        const { error: dbError } = await sb.from('transactions').insert([{ 
-                            username: currentUser, amount: result.amount, type: txType, date: result.date, slip_text: slipNote, title: 'ทำรายการ'
-                        }]);
-
-                        if (dbError) failCount++; else successCount++;
+                        let shouldSave = true;
+                        if (dupCheck && dupCheck.length > 0) { 
+                            shouldSave = confirm(`ตรวจพบข้อมูลซ้ำ!\n(ยอด ${result.amount} บ. วันที่ ${result.date} เวลา ${result.time || '00:00'} น.)\n\nคุณต้องการยืนยันการบันทึกสลิปนี้ซ้ำหรือไม่?`);
+                        }
+                        
+                        if(shouldSave) {
+                            const { error: dbError } = await sb.from('transactions').insert([{ 
+                                username: currentUser, amount: result.amount, type: txType, date: result.date, slip_text: slipNote, title: 'ทำรายการ'
+                            }]);
+                            if (dbError) failCount++; else successCount++;
+                        } else {
+                            failCount++;
+                        }
 
                     } catch (fileErr) { failCount++; }
                 } 
@@ -1127,26 +1146,36 @@
                                 barcodeStr = "DRM" + result.date.replace(/-/g, '') + Math.floor(1000+Math.random()*9000);
                             }
 
-                            const { error: dbError } = await sb.from('transactions').insert([{ 
-                                username: currentUser, 
-                                amount: result.amount, 
-                                type: 'dormitory', 
-                                date: result.date, 
-                                slip_text: slipNote, 
-                                title: 'รอบเดือน...',
-                                room_rate: '3200', 
-                                water_bill: '0', 
-                                electric_bill: '0',
-                                barcode: barcodeStr,
-                                slip_image: compressedBase64
-                            }]);
-
-                            if (dbError) failCount++; else successCount++;
+                            const { data: dupCheck } = await sb.from('transactions').select('*').eq('username', currentUser).eq('amount', result.amount).eq('date', result.date).ilike('slip_text', `%เวลา ${result.time}%`);
+                            
+                            let shouldSave = true;
+                            if (dupCheck && dupCheck.length > 0) { 
+                                shouldSave = confirm(`ตรวจพบข้อมูลซ้ำ!\n(ยอด ${result.amount} บ. วันที่ ${result.date} เวลา ${result.time || '00:00'} น.)\n\nคุณต้องการยืนยันการบันทึกสลิปนี้ซ้ำหรือไม่?`);
+                            }
+                            
+                            if (shouldSave) {
+                                const { error: dbError } = await sb.from('transactions').insert([{ 
+                                    username: currentUser, 
+                                    amount: result.amount, 
+                                    type: 'dormitory', 
+                                    date: result.date, 
+                                    slip_text: slipNote, 
+                                    title: 'รอบเดือน...',
+                                    room_rate: '3200', 
+                                    water_bill: '0', 
+                                    electric_bill: '0',
+                                    barcode: barcodeStr,
+                                    slip_image: compressedBase64
+                                }]);
+                                if (dbError) failCount++; else successCount++;
+                            } else {
+                                failCount++;
+                            }
 
                         } catch (fileErr) { failCount++; }
                         
                         if(i === files.length - 1) {
-                            statusTxt.innerText = `สำเร็จ ${successCount} ใบ | ไม่ผ่าน ${failCount} ใบ`;
+                            statusTxt.innerText = `สำเร็จ ${successCount} ใบ | ไม่ผ่านหรือซ้ำ ${failCount} ใบ`;
                             statusTxt.style.color = failCount > 0 ? (successCount > 0 ? "#F39C12" : "#D32F2F") : "#2E7D32";
                             setTimeout(() => statusTxt.innerText = "", 5000);
                             loadDormData(); 
@@ -1190,171 +1219,189 @@
         }
 
         async function loadData() {
-            const { data } = await sb.from('transactions').select('*').eq('username', currentUser).in('type', ['income', 'expense']).order('date', {ascending: true}).order('id', {ascending: true});
-            
-            const mode = document.getElementById('filter-mode').value;
-            const selDay = document.getElementById('filter-day').value;
-            const selMonth = document.getElementById('filter-month').value;
-            const selYear = document.getElementById('filter-year').value;
+            try {
+                const { data } = await sb.from('transactions').select('*').eq('username', currentUser).in('type', ['income', 'expense']).order('date', {ascending: true}).order('id', {ascending: true});
+                
+                const mode = document.getElementById('filter-mode').value;
+                const selDay = document.getElementById('filter-day').value;
+                const selMonth = document.getElementById('filter-month').value;
+                const selYear = document.getElementById('filter-year').value;
 
-            let runningBalance = 0; let filteredData = [];
-            let sumIncome = 0; let sumExpense = 0;
+                let runningBalance = 0; let filteredData = [];
+                let sumIncome = 0; let sumExpense = 0;
 
-            if(data) {
-                data.forEach(item => {
-                    const amt = parseFloat(item.amount);
-                    item.type === 'income' ? runningBalance += amt : runningBalance -= amt;
-                    item.balance = runningBalance;
+                if(data) {
+                    data.forEach(item => {
+                        if (!item.date) return; // ป้องกัน Error หากข้อมูลวันที่ว่าง
+                        const amt = parseFloat(item.amount);
+                        item.type === 'income' ? runningBalance += amt : runningBalance -= amt;
+                        item.balance = runningBalance;
 
-                    const [y, m, d] = item.date.split('-');
-                    let isMatch = false;
-                    if (mode === 'daily') isMatch = (y === selYear && m === selMonth && d === selDay);
-                    else if (mode === 'monthly') isMatch = (y === selYear && m === selMonth);
-                    else if (mode === 'yearly') isMatch = (y === selYear);
+                        const [y, m, d] = item.date.split('-');
+                        let isMatch = false;
+                        if (mode === 'daily') isMatch = (y === selYear && m === selMonth && d === selDay);
+                        else if (mode === 'monthly') isMatch = (y === selYear && m === selMonth);
+                        else if (mode === 'yearly') isMatch = (y === selYear);
 
-                    if(isMatch) {
-                        filteredData.push(item);
-                        if(item.type === 'income') sumIncome += amt; else sumExpense += amt;
+                        if(isMatch) {
+                            filteredData.push(item);
+                            if(item.type === 'income') sumIncome += amt; else sumExpense += amt;
+                        }
+                    });
+                }
+                
+                const sumBalance = sumIncome - sumExpense;
+                document.getElementById('sum-income').innerText = formatDisplayAmount(sumIncome) + ' ฿';
+                document.getElementById('sum-expense').innerText = formatDisplayAmount(sumExpense) + ' ฿';
+                document.getElementById('sum-balance').innerText = formatDisplayAmount(sumBalance) + ' ฿';
+
+                filteredData.reverse();
+
+                if(filteredData.length === 0) {
+                    document.getElementById('history-table').innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
+                    return;
+                }
+
+                document.getElementById('history-table').innerHTML = filteredData.map(i => {
+                    try {
+                        const isInc = i.type === 'income';
+                        const dParts = (i.date || "").split('-');
+                        const monthIndex = parseInt(dParts[1]) ? parseInt(dParts[1]) - 1 : 0;
+                        const thDate = `${dParts[2] || '-'} ${thaiMonthsShort[monthIndex] || '-'} ${(parseInt(dParts[0]) || 0) + 543}`;
+                        
+                        const incSplit = splitAmount(isInc ? i.amount : 0);
+                        const expSplit = splitAmount(!isInc ? i.amount : 0);
+                        const balSplit = splitAmount(i.balance);
+                        
+                        const titleText = i.title || 'ทำรายการ';
+                        const noteText = i.slip_text || '-';
+
+                        return `<tr>
+                            <td>${thDate}</td>
+                            <td style="text-align:left; padding-left:10px;">
+                                <span onclick="editRecord(${i.id}, 'title', '${titleText}', false)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                                    ${titleText} ${editIconSVG}
+                                </span>
+                            </td>
+                            <td class="col-baht text-income">${incSplit.baht}</td>
+                            <td class="col-satang text-income">${incSplit.satang}</td>
+                            <td class="col-baht text-expense">${expSplit.baht}</td>
+                            <td class="col-satang text-expense">${expSplit.satang}</td>
+                            <td class="col-baht text-balance">${balSplit.baht}</td>
+                            <td class="col-satang text-balance">${balSplit.satang}</td>
+                            <td style="text-align:left; padding-left:10px;">
+                                <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}', false)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                                    ${noteText} ${editIconSVG}
+                                </span>
+                            </td>
+                            <td style="text-align:center;">
+                                <span onclick="deleteTransaction(${i.id})" style="cursor:pointer;" title="ลบรายการ">${trashIconSVG}</span>
+                            </td>
+                        </tr>`;
+                    } catch (e) {
+                        return '';
                     }
-                });
+                }).join('');
+            } catch (error) {
+                console.error("Load Data Error:", error);
             }
-            
-            const sumBalance = sumIncome - sumExpense;
-            document.getElementById('sum-income').innerText = formatDisplayAmount(sumIncome) + ' ฿';
-            document.getElementById('sum-expense').innerText = formatDisplayAmount(sumExpense) + ' ฿';
-            document.getElementById('sum-balance').innerText = formatDisplayAmount(sumBalance) + ' ฿';
-
-            filteredData.reverse();
-
-            if(filteredData.length === 0) {
-                document.getElementById('history-table').innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
-                return;
-            }
-
-            document.getElementById('history-table').innerHTML = filteredData.map(i => {
-                const isInc = i.type === 'income';
-                const dParts = i.date.split('-');
-                const monthIndex = parseInt(dParts[1]) - 1;
-                const thDate = `${parseInt(dParts[2])} ${thaiMonthsShort[monthIndex]} ${(parseInt(dParts[0])+543)}`;
-                
-                const incSplit = splitAmount(isInc ? i.amount : 0);
-                const expSplit = splitAmount(!isInc ? i.amount : 0);
-                const balSplit = splitAmount(i.balance);
-                
-                const titleText = i.title || 'ทำรายการ';
-                const noteText = i.slip_text || '-';
-
-                return `<tr>
-                    <td>${thDate}</td>
-                    <td style="text-align:left; padding-left:10px;">
-                        <span onclick="editRecord(${i.id}, 'title', '${titleText}', false)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-                            ${titleText} ${editIconSVG}
-                        </span>
-                    </td>
-                    <td class="col-baht text-income">${incSplit.baht}</td>
-                    <td class="col-satang text-income">${incSplit.satang}</td>
-                    <td class="col-baht text-expense">${expSplit.baht}</td>
-                    <td class="col-satang text-expense">${expSplit.satang}</td>
-                    <td class="col-baht text-balance">${balSplit.baht}</td>
-                    <td class="col-satang text-balance">${balSplit.satang}</td>
-                    <td style="text-align:left; padding-left:10px;">
-                        <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}', false)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-                            ${noteText} ${editIconSVG}
-                        </span>
-                    </td>
-                    <td style="text-align:center;">
-                        <span onclick="deleteTransaction(${i.id})" style="cursor:pointer;" title="ลบรายการ">${trashIconSVG}</span>
-                    </td>
-                </tr>`;
-            }).join('');
         }
 
         async function loadDormData() {
-            const { data } = await sb.from('transactions').select('*').eq('username', currentUser).eq('type', 'dormitory').order('date', {ascending: false}).order('id', {ascending: false});
-            
-            const mode = document.getElementById('dorm-filter-mode').value;
-            const selDay = document.getElementById('dorm-filter-day').value;
-            const selMonth = document.getElementById('dorm-filter-month').value;
-            const selYear = document.getElementById('dorm-filter-year').value;
+            try {
+                const { data } = await sb.from('transactions').select('*').eq('username', currentUser).eq('type', 'dormitory').order('date', {ascending: false}).order('id', {ascending: false});
+                
+                const mode = document.getElementById('dorm-filter-mode').value;
+                const selDay = document.getElementById('dorm-filter-day').value;
+                const selMonth = document.getElementById('dorm-filter-month').value;
+                const selYear = document.getElementById('dorm-filter-year').value;
 
-            let filteredData = [];
+                let filteredData = [];
 
-            if(data) {
-                data.forEach(item => {
-                    const [y, m, d] = item.date.split('-');
-                    let isMatch = false;
-                    if (mode === 'daily') isMatch = (y === selYear && m === selMonth && d === selDay);
-                    else if (mode === 'monthly') isMatch = (y === selYear && m === selMonth);
-                    else if (mode === 'yearly') isMatch = (y === selYear);
+                if(data) {
+                    data.forEach(item => {
+                        if (!item.date) return; // ป้องกัน Error หากข้อมูลวันที่ว่าง
+                        const [y, m, d] = item.date.split('-');
+                        let isMatch = false;
+                        if (mode === 'daily') isMatch = (y === selYear && m === selMonth && d === selDay);
+                        else if (mode === 'monthly') isMatch = (y === selYear && m === selMonth);
+                        else if (mode === 'yearly') isMatch = (y === selYear);
 
-                    if(isMatch) filteredData.push(item);
+                        if(isMatch) filteredData.push(item);
+                    });
+                }
+
+                if(filteredData.length === 0) {
+                    document.getElementById('dorm-history-table').innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
+                    return;
+                }
+
+                document.getElementById('dorm-history-table').innerHTML = filteredData.map(i => {
+                    try {
+                        const dParts = (i.date || "").split('-');
+                        const monthIndex = parseInt(dParts[1]) ? parseInt(dParts[1]) - 1 : 0;
+                        const thDate = `${dParts[2] || '-'} ${thaiMonthsShort[monthIndex] || '-'} ${(parseInt(dParts[0]) || 0) + 543}`;
+                        
+                        const titleText = i.title || 'รอบเดือน...';
+                        const noteText = i.slip_text || '-';
+                        
+                        const rRate = i.room_rate || '3200';
+                        const wBill = i.water_bill || '0';
+                        const eBill = i.electric_bill || '0';
+                        const totalAmt = formatDisplayAmount(i.amount);
+
+                        let slipHtml = i.slip_image ? `<span onclick="viewImage('${i.slip_image}')" style="cursor:pointer; color:var(--bbl-blue); text-decoration:underline; font-weight:bold;">ดูสลิป</span>` : '-';
+
+                        return `<tr>
+                            <td>${thDate}</td>
+                            <td style="text-align:left; padding-left:5px;">
+                                <span onclick="editRecord(${i.id}, 'title', '${titleText}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                                    ${titleText} ${editIconSVG}
+                                </span>
+                            </td>
+                            <td>
+                                <span onclick="editRecord(${i.id}, 'room_rate', '${rRate}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                                    ${rRate} ${editIconSVG}
+                                </span>
+                            </td>
+                            <td>
+                                <span onclick="editRecord(${i.id}, 'water_bill', '${wBill}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                                    ${wBill} ${editIconSVG}
+                                </span>
+                            </td>
+                            <td>
+                                <span onclick="editRecord(${i.id}, 'electric_bill', '${eBill}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                                    ${eBill} ${editIconSVG}
+                                </span>
+                            </td>
+                            <td style="font-weight:bold; color:var(--bbl-orange);">${totalAmt}</td>
+                            <td style="padding: 5px;">
+                                <svg class="barcode-svg" id="barcode-${i.id}" style="width:100%; height:40px;"></svg>
+                            </td>
+                            <td>${slipHtml}</td>
+                            <td style="text-align:left; padding-left:5px;">
+                                <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                                    ${noteText} ${editIconSVG}
+                                </span>
+                            </td>
+                            <td style="text-align:center;">
+                                <span onclick="deleteTransaction(${i.id})" style="cursor:pointer;" title="ลบรายการ">${trashIconSVG}</span>
+                            </td>
+                        </tr>`;
+                    } catch(e) {
+                        return '';
+                    }
+                }).join('');
+
+                Array.from(filteredData).forEach(i => {
+                    let bVal = i.barcode || i.id.toString();
+                    try {
+                        JsBarcode("#barcode-" + i.id, bVal, { width: 1.5, height: 30, displayValue: false, margin: 0 });
+                    } catch(e) {}
                 });
+            } catch (error) {
+                console.error("Load Dorm Data Error:", error);
             }
-
-            if(filteredData.length === 0) {
-                document.getElementById('dorm-history-table').innerHTML = `<tr><td colspan="10" style="padding:20px; color:#888;">ไม่มีรายการในช่วงเวลาที่เลือก</td></tr>`;
-                return;
-            }
-
-            document.getElementById('dorm-history-table').innerHTML = filteredData.map(i => {
-                const dParts = i.date.split('-');
-                const monthIndex = parseInt(dParts[1]) - 1;
-                const thDate = `${parseInt(dParts[2])} ${thaiMonthsShort[monthIndex]} ${(parseInt(dParts[0])+543)}`;
-                
-                const titleText = i.title || 'รอบเดือน...';
-                const noteText = i.slip_text || '-';
-                
-                const rRate = i.room_rate || '3200';
-                const wBill = i.water_bill || '0';
-                const eBill = i.electric_bill || '0';
-                const totalAmt = formatDisplayAmount(i.amount);
-
-                let slipHtml = i.slip_image ? `<span onclick="viewImage('${i.slip_image}')" style="cursor:pointer; color:var(--bbl-blue); text-decoration:underline; font-weight:bold;">ดูสลิป</span>` : '-';
-
-                return `<tr>
-                    <td>${thDate}</td>
-                    <td style="text-align:left; padding-left:5px;">
-                        <span onclick="editRecord(${i.id}, 'title', '${titleText}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-                            ${titleText} ${editIconSVG}
-                        </span>
-                    </td>
-                    <td>
-                        <span onclick="editRecord(${i.id}, 'room_rate', '${rRate}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
-                            ${rRate} ${editIconSVG}
-                        </span>
-                    </td>
-                    <td>
-                        <span onclick="editRecord(${i.id}, 'water_bill', '${wBill}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
-                            ${wBill} ${editIconSVG}
-                        </span>
-                    </td>
-                    <td>
-                        <span onclick="editRecord(${i.id}, 'electric_bill', '${eBill}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
-                            ${eBill} ${editIconSVG}
-                        </span>
-                    </td>
-                    <td style="font-weight:bold; color:var(--bbl-orange);">${totalAmt}</td>
-                    <td style="padding: 5px;">
-                        <svg class="barcode-svg" id="barcode-${i.id}" style="width:100%; height:40px;"></svg>
-                    </td>
-                    <td>${slipHtml}</td>
-                    <td style="text-align:left; padding-left:5px;">
-                        <span onclick="editRecord(${i.id}, 'slip_text', '${noteText}', true)" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-                            ${noteText} ${editIconSVG}
-                        </span>
-                    </td>
-                    <td style="text-align:center;">
-                        <span onclick="deleteTransaction(${i.id})" style="cursor:pointer;" title="ลบรายการ">${trashIconSVG}</span>
-                    </td>
-                </tr>`;
-            }).join('');
-
-            filteredData.forEach(i => {
-                let bVal = i.barcode || i.id.toString();
-                try {
-                    JsBarcode("#barcode-" + i.id, bVal, { width: 1.5, height: 30, displayValue: false, margin: 0 });
-                } catch(e) {}
-            });
         }
     </script>
 </body>
